@@ -9,6 +9,7 @@
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
+    "lint": "eslint . --ext .ts,.html --max-warnings=0",
     "serve:ssr:terracare-angular": "node dist/terracare-angular/server/server.mjs"
   },
   "private": true,
