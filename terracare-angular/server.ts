@@ -44,6 +44,28 @@ export function app(): express.Express {
     ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_FALLBACK)
     : null;
 
+  // Minimal auth middleware: requires Bearer token and verifies it with Supabase
+  async function requireAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+    try {
+      if (!serverClient) {
+        return res.status(500).json({ error: 'Server missing Supabase configuration' });
+      }
+      const auth = req.headers['authorization'] || '';
+      const token = Array.isArray(auth) ? auth[0] : auth;
+      const match = token?.match(/^Bearer\s+(.+)$/i);
+      const jwt = match?.[1];
+      if (!jwt) return res.status(401).json({ error: 'Unauthorized' });
+
+      const { data, error } = await serverClient.auth.getUser(jwt);
+      if (error || !data?.user) return res.status(401).json({ error: 'Unauthorized' });
+      // attach user for downstream handlers
+      (res.locals as any).user = data.user;
+      return next();
+    } catch (e) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
   // Health check
   server.get('/api/health', (_req, res) => {
     res.json({ ok: true, ts: new Date().toISOString() });
@@ -70,7 +92,7 @@ export function app(): express.Express {
   });
 
   // Knowledge API - POST create item
-  server.post('/api/knowledge', async (req, res) => {
+  server.post('/api/knowledge', requireAuth, async (req, res) => {
     try {
       if (!serverClient) {
         return res.status(500).json({ error: 'Server not configured for Supabase. Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.' });

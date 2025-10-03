@@ -22,6 +22,7 @@ This app includes a minimal SSR Express API backed by Supabase.
 1) Create a `.env` file from `.env.sample` and set:
 
 - SUPABASE_URL
+- SUPABASE_ANON_KEY (optional fallback)
 - SUPABASE_SERVICE_ROLE_KEY (server only)
 
 2) Configure client env in `src/environments/environment.ts` and `.prod.ts`:
@@ -41,6 +42,14 @@ Use `npm run serve:ssr` then open the logged server URL. API endpoints:
 
 - GET /api/health
 - GET /api/knowledge
+- POST /api/knowledge (protected; requires `Authorization: Bearer <JWT>`)
+
+Auth on the server:
+- A minimal auth middleware verifies the Bearer JWT using `supabase.auth.getUser(jwt)`.
+- To perform writes from the server API, set `SUPABASE_SERVICE_ROLE_KEY` in `.env` and define appropriate RLS policies.
+
+Client auth stability:
+- The app configures Supabase with a Zone-safe in-memory lock and reuses a single client across HMR to avoid browser Navigator LockManager issues when using Angular + zone.js.
 
 ## Code scaffolding
 
