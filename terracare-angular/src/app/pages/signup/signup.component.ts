@@ -14,6 +14,7 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class SignupComponent {
   form = this.fb.group({
+    username: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(30)]],
     fullname: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
@@ -57,10 +58,19 @@ export class SignupComponent {
     }
 
     if (!this.canSubmit) return; // guard against other invalid cases
-    const { email, password } = this.form.value;
+    const { email, password, fullname, username } = this.form.value;
     this.submitting = true;
     try {
-      await this.auth.signUp(email!, password!);
+      const res = await this.auth.signUp(email!, password!);
+      const userId = res.user?.id;
+      // Create profiles row if we have a user id
+      if (userId && username) {
+        // swallow unique constraint error if username already exists
+        await this.auth.createOrUpdateProfile(userId, {
+          username: username.trim(),
+          full_name: fullname?.trim() || null,
+        });
+      }
       this.message = 'Signup successful. Please check your email to confirm.';
     } catch (e: any) {
       this.message = e?.message || 'Signup failed';

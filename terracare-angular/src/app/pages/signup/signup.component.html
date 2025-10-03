@@ -3,6 +3,20 @@
   <h2>TerraCare</h2>
 
   <form [formGroup]="form" (ngSubmit)="submit()">
+    <label for="username">Username</label>
+    <input
+      type="text"
+      id="username"
+      formControlName="username"
+      name="username"
+      placeholder="yourhandle"
+      autocomplete="nickname"
+      required
+    >
+    <small *ngIf="form.get('username')?.invalid && form.get('username')?.touched" style="color:#b00020;">
+      Username is required (3–30 characters).
+    </small>
+
     <label for="fullname">Full Name</label>
     <input
       type="text"

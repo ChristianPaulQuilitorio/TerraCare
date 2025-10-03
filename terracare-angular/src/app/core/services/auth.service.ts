@@ -21,4 +21,13 @@ export class AuthService {
 		const { error } = await this.supabase.client.auth.signOut({ scope });
 		if (error) throw error;
 	}
+
+	async createOrUpdateProfile(userId: string, values: { username?: string | null; full_name?: string | null; avatar_url?: string | null; bio?: string | null; }) {
+		const payload: any = { ...values, id: userId };
+		// Try upsert on profiles
+		const { error } = await this.supabase.client
+			.from('profiles')
+			.upsert(payload, { onConflict: 'id' });
+		if (error) throw error;
+	}
 }
