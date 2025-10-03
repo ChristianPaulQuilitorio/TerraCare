@@ -21,6 +21,8 @@
 }
 .info .name { font-weight: 600; }
 .info .email { color: #6b7280; font-size: .9rem; }
+.info .username { color: #374151; font-size: .9rem; }
+.info .username.missing { color: #9ca3af; }
 .btn {
   display: inline-block;
   margin-top: .5rem;

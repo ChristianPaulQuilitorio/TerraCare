@@ -12,6 +12,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
 })
 export class ProfileComponent {
   userEmail: string | null = null;
+  username: string | null = null;
   displayName: string | null = null;
   loading = true;
 
@@ -22,8 +23,19 @@ export class ProfileComponent {
   async loadUser() {
     try {
       const { data } = await this.supabase.client.auth.getUser();
-      this.userEmail = data.user?.email ?? null;
-      this.displayName = (data.user?.user_metadata as any)?.full_name ?? null;
+      const user = data.user;
+      this.userEmail = user?.email ?? null;
+      this.displayName = (user?.user_metadata as any)?.full_name ?? null;
+      if (user?.id) {
+        const { data: prof } = await this.supabase.client
+          .from('profiles')
+          .select('username, full_name')
+          .eq('id', user.id)
+          .single();
+        this.username = prof?.username ?? null;
+        // Prefer full_name from profiles if present
+        if (prof?.full_name) this.displayName = prof.full_name;
+      }
     } catch (e) {
       this.userEmail = null;
     } finally {

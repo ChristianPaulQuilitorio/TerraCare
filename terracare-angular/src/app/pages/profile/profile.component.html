@@ -5,7 +5,9 @@
     <div class="profile-card">
       <div class="avatar" aria-hidden="true">👤</div>
       <div class="info">
-        <div class="name">{{ displayName || 'Anonymous User' }}</div>
+  <div class="name">{{ displayName || 'Anonymous User' }}</div>
+  <div class="username" *ngIf="username">@{{ username }}</div>
+  <div class="username missing" *ngIf="!username">No username yet</div>
         <div class="email">{{ userEmail || '—' }}</div>
         <a routerLink="/dashboard" class="btn">Back to Dashboard</a>
       </div>
