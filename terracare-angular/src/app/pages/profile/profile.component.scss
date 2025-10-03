@@ -1,0 +1,35 @@
+.profile {
+  padding: 2rem 1rem;
+}
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: .5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.avatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
+.info .name { font-weight: 600; }
+.info .email { color: #6b7280; font-size: .9rem; }
+.btn {
+  display: inline-block;
+  margin-top: .5rem;
+  padding: .4rem .75rem;
+  background: #10b981;
+  color: #fff;
+  border-radius: .375rem;
+  text-decoration: none;
+}
+.sections { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+@media (min-width: 768px) { .sections { grid-template-columns: 1fr 1fr; } }
+.section { border: 1px solid #e5e7eb; border-radius: .5rem; padding: 1rem; }

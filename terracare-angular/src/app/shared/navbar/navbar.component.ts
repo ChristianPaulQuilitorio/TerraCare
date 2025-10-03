@@ -19,7 +19,7 @@ import { Router, RouterLink } from '@angular/router';
         <li><a routerLink="/challenges">Challenges</a></li>
         <li><a routerLink="/knowledge">Knowledge Hub</a></li>
         <li><a routerLink="/forum">Forum</a></li>
-        <li><a (click)="goToProfile()" href="/login">Profile</a></li>
+  <li><a routerLink="/profile">Profile</a></li>
       </ul>
       <ul class="navbar-actions">
         <li><a title="Search"><span class="icon-search"></span></a></li>
@@ -30,10 +30,4 @@ import { Router, RouterLink } from '@angular/router';
   styleUrls: ['./navbar.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class NavbarComponent {
-  constructor(private router: Router) {}
-  // Since we have no auth yet, always send to login.
-  goToProfile() {
-    this.router.navigateByUrl('/login');
-  }
-}
+export class NavbarComponent {}

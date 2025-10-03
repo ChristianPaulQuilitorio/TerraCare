@@ -1,0 +1,28 @@
+<section class="profile">
+  <h1>Profile Dashboard</h1>
+  <div *ngIf="loading">Loading profile…</div>
+  <div *ngIf="!loading">
+    <div class="profile-card">
+      <div class="avatar" aria-hidden="true">👤</div>
+      <div class="info">
+        <div class="name">{{ displayName || 'Anonymous User' }}</div>
+        <div class="email">{{ userEmail || '—' }}</div>
+        <a routerLink="/dashboard" class="btn">Back to Dashboard</a>
+      </div>
+    </div>
+
+    <div class="sections">
+      <div class="section">
+        <h2>Account</h2>
+        <ul>
+          <li>Email: {{ userEmail || '—' }}</li>
+          <li>Name: {{ displayName || '—' }}</li>
+        </ul>
+      </div>
+      <div class="section">
+        <h2>Activity</h2>
+        <p>Recent challenges, forum posts, and knowledge contributions will appear here.</p>
+      </div>
+    </div>
+  </div>
+</section>
