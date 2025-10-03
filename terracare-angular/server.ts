@@ -4,6 +4,8 @@ import express from 'express';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
+import 'dotenv/config';
+import { createClient } from '@supabase/supabase-js';
 
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
@@ -16,6 +18,78 @@ export function app(): express.Express {
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
+
+  // Body parsers for API routes
+  server.use(express.json());
+  server.use(express.urlencoded({ extended: true }));
+
+  // Basic CORS for dev when front-end runs on a different origin
+  server.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(204);
+      return;
+    }
+    next();
+  });
+
+  // --- Supabase server client (service role) ---
+  const SUPABASE_URL = process.env['SUPABASE_URL'] ?? '';
+  const SUPABASE_SERVICE_ROLE_KEY = process.env['SUPABASE_SERVICE_ROLE_KEY'] ?? '';
+  const SUPABASE_ANON_FALLBACK = process.env['SUPABASE_ANON_KEY'] ?? '';
+
+  const serverClient = (SUPABASE_URL && (SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_FALLBACK))
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY || SUPABASE_ANON_FALLBACK)
+    : null;
+
+  // Health check
+  server.get('/api/health', (_req, res) => {
+    res.json({ ok: true, ts: new Date().toISOString() });
+  });
+
+  // Knowledge API - GET all items
+  server.get('/api/knowledge', async (_req, res) => {
+    try {
+      if (!serverClient) {
+        return res.status(500).json({ error: 'Server not configured for Supabase. Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.' });
+      }
+      const { data, error } = await serverClient
+        .from('knowledge')
+        .select('title, description, category')
+        .order('title', { ascending: true });
+
+      if (error) {
+        return res.status(500).json({ error: error.message });
+      }
+      return res.json(data ?? []);
+    } catch (err: any) {
+      return res.status(500).json({ error: err?.message || 'Unexpected server error' });
+    }
+  });
+
+  // Knowledge API - POST create item
+  server.post('/api/knowledge', async (req, res) => {
+    try {
+      if (!serverClient) {
+        return res.status(500).json({ error: 'Server not configured for Supabase. Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY.' });
+      }
+      const { title, description, category } = req.body || {};
+      if (!title || !description) {
+        return res.status(400).json({ error: 'title and description are required' });
+      }
+      const { data, error } = await serverClient
+        .from('knowledge')
+        .insert([{ title, description, category: category ?? null }])
+        .select('title, description, category')
+        .single();
+      if (error) return res.status(500).json({ error: error.message });
+      return res.status(201).json(data);
+    } catch (err: any) {
+      return res.status(500).json({ error: err?.message || 'Unexpected server error' });
+    }
+  });
 
   // Example Express Rest API endpoints
   // server.get('/api/**', (req, res) => { });

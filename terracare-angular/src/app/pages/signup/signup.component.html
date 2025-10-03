@@ -3,16 +3,6 @@
   <h2>TerraCare</h2>
 
   <form [formGroup]="form" (ngSubmit)="submit()">
-    <!-- Error Message -->
-    <div *ngIf="errorMessage" class="error-message" style="background-color:#ffebee; color:#c62828; padding:10px; border-radius:4px; margin-bottom:16px; border:1px solid #ef5350;">
-      {{ errorMessage }}
-    </div>
-
-    <!-- Success Message -->
-    <div *ngIf="successMessage" class="success-message" style="background-color:#e8f5e8; color:#2e7d32; padding:10px; border-radius:4px; margin-bottom:16px; border:1px solid #66bb6a;">
-      {{ successMessage }}
-    </div>
-
     <label for="fullname">Full Name</label>
     <input
       type="text"
@@ -22,34 +12,22 @@
       placeholder="Your full name"
       autocomplete="name"
       required
-      [disabled]="isLoading"
     >
     <small *ngIf="form.get('fullname')?.invalid && form.get('fullname')?.touched" style="color:#b00020;">
       Full name is required (2–80 characters).
     </small>
 
     <label for="email">Email Address</label>
-    <input type="email" id="email" formControlName="email" placeholder="name@example.com" required [disabled]="isLoading">
-    <small *ngIf="form.get('email')?.invalid && form.get('email')?.touched" style="color:#b00020;">
-      Please enter a valid email address.
-    </small>
+  <input type="email" id="email" formControlName="email" placeholder="name@example.com" required>
 
     <label for="password">Password</label>
-    <input type="password" id="password" formControlName="password" placeholder="********" required [disabled]="isLoading">
-    <small *ngIf="form.get('password')?.invalid && form.get('password')?.touched" style="color:#b00020;">
-      Password must be at least 6 characters long.
-    </small>
+  <input type="password" id="password" formControlName="password" placeholder="********" required>
 
     <label for="confirm-password">Confirm Password</label>
-    <input type="password" id="confirm-password" formControlName="confirmPassword" placeholder="********" required [disabled]="isLoading">
-    <small *ngIf="form.hasError('mismatch') && form.get('confirmPassword')?.touched" style="color:#b00020;">
-      Passwords do not match.
-    </small>
+  <input type="password" id="confirm-password" formControlName="confirmPassword" placeholder="********" required>
 
-    <button type="submit" class="login-btn" id="signupBtn" [disabled]="!canSubmit">
-      <span *ngIf="!isLoading">Sign Up</span>
-      <span *ngIf="isLoading">Creating Account...</span>
-    </button>
+  <button type="submit" class="login-btn" id="signupBtn" [disabled]="submitting">{{ submitting ? 'Creating account…' : 'Sign Up' }}</button>
+  <p *ngIf="message">{{ message }}</p>
 
     <p class="signup-text">
       Already have an account? <a routerLink="/login">Login</a>
@@ -71,6 +49,10 @@
   </form>
 </div>
 
+<!-- Toast: please agree -->
+<div class="toast toast--error" *ngIf="showAgreeToast">
+  Please agree to the Privacy Policy and Terms.
+</div>
 <div id="privacyModal" class="modal" *ngIf="showPrivacy" (click)="closePrivacy()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <h3>Privacy Agreement</h3>

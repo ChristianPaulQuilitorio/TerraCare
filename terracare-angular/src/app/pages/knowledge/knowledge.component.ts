@@ -1,7 +1,8 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, ViewEncapsulation, Inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { NavbarComponent } from '../../shared/navbar/navbar.component';
-import { SiteConfigService } from '../../core/services/site-config.service';
+import { KnowledgeService } from '../../core/services/knowledge.service';
+import { KnowledgeItem } from '../../core/models/knowledge-item.model';
 
 @Component({
   selector: 'app-knowledge',
@@ -12,6 +13,22 @@ import { SiteConfigService } from '../../core/services/site-config.service';
   encapsulation: ViewEncapsulation.None,
 })
 export class KnowledgeComponent {
-  items = this.siteConfig.knowledgeItems;
-  constructor(private siteConfig: SiteConfigService) {}
+  items: KnowledgeItem[] = [];
+  loading = true;
+  error?: string;
+
+  constructor(private knowledge: KnowledgeService, @Inject(PLATFORM_ID) private platformId: Object) {}
+
+  ngOnInit() {
+    // Only fetch on the client to avoid SSR prerender network calls
+    const isBrowser = typeof window !== 'undefined';
+    if (!isBrowser) {
+      this.loading = false;
+      return;
+    }
+    this.knowledge.getAll().subscribe((items) => {
+      this.items = items;
+      this.loading = false;
+    });
+  }
 }

@@ -1,10 +1,8 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { UserService } from '../../core/services/user.service';
-import { SignUpRequest } from '../../core/models/auth.model';
 
 @Component({
   selector: 'app-signup',
@@ -24,16 +22,10 @@ export class SignupComponent {
     terms: [false, Validators.requiredTrue],
   }, { validators: this.passwordsMatch });
 
-  isLoading = false;
-  errorMessage = '';
-  successMessage = '';
-
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private userService: UserService,
-    private router: Router
-  ) {}
+  message = '';
+  submitting = false;
+  showAgreeToast = false;
+  constructor(private fb: FormBuilder, private auth: AuthService) {}
 
   passwordsMatch(group: AbstractControl): ValidationErrors | null {
     const p = group.get('password')?.value;
@@ -41,73 +33,41 @@ export class SignupComponent {
     return p && c && p === c ? null : { mismatch: true };
   }
 
-  get canSubmit(): boolean { 
-    return this.form.valid && !this.isLoading; 
+  get canSubmit(): boolean { return this.form.valid; }
+
+  // Allow clicking submit when core fields are valid even if privacy/terms unchecked
+  get canAttemptSubmit(): boolean {
+    const f = this.form;
+    const fullnameValid = f.get('fullname')?.valid;
+    const emailValid = f.get('email')?.valid;
+    const passwordValid = f.get('password')?.valid;
+    const confirmValid = f.get('confirmPassword')?.valid;
+    const noMismatch = !f.errors || !f.errors['mismatch'];
+    return !!(fullnameValid && emailValid && passwordValid && confirmValid && noMismatch);
   }
 
-  submit() {
-    if (!this.canSubmit) return;
-    
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
+  async submit() {
+    // If agreements are not checked, show notification toast and stop
+    const agreedPrivacy = !!this.form.get('privacy')?.value;
+    const agreedTerms = !!this.form.get('terms')?.value;
+    if (!agreedPrivacy || !agreedTerms) {
+      this.showAgreeToast = true;
+      setTimeout(() => this.showAgreeToast = false, 2500);
+      return;
+    }
 
-    const formValue = this.form.value;
-    const signUpData: SignUpRequest = {
-      email: formValue.email!,
-      password: formValue.password!,
-      fullName: formValue.fullname!
-    };
-
-    this.authService.signUp(signUpData).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        
-        if (response.success) {
-          if (response.user) {
-            // Create user profile
-            this.userService.createUserProfile(response.user.id, response.user.fullName).subscribe({
-              next: (profileResponse) => {
-                if (profileResponse.success) {
-                  this.successMessage = response.message || 'Account created successfully!';
-                  
-                  // If user is automatically logged in, redirect to dashboard
-                  if (this.authService.isAuthenticated()) {
-                    setTimeout(() => {
-                      this.router.navigate(['/dashboard']);
-                    }, 2000);
-                  } else {
-                    // If email confirmation is required, show message
-                    setTimeout(() => {
-                      this.router.navigate(['/login']);
-                    }, 3000);
-                  }
-                } else {
-                  this.errorMessage = 'Account created but failed to set up profile. Please contact support.';
-                }
-              },
-              error: () => {
-                this.errorMessage = 'Account created but failed to set up profile. Please contact support.';
-              }
-            });
-          } else {
-            this.successMessage = response.message || 'Account created successfully!';
-            setTimeout(() => {
-              this.router.navigate(['/login']);
-            }, 3000);
-          }
-        } else {
-          this.errorMessage = response.error || 'Failed to create account. Please try again.';
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = 'An unexpected error occurred. Please try again.';
-        console.error('Signup error:', error);
-      }
-    });
+    if (!this.canSubmit) return; // guard against other invalid cases
+    const { email, password } = this.form.value;
+    this.submitting = true;
+    try {
+      await this.auth.signUp(email!, password!);
+      this.message = 'Signup successful. Please check your email to confirm.';
+    } catch (e: any) {
+      this.message = e?.message || 'Signup failed';
+    } finally {
+      this.submitting = false;
+    }
   }
-
   // Modal state and handlers
   showPrivacy = false;
   showTerms = false;
@@ -116,3 +76,4 @@ export class SignupComponent {
   openTerms() { this.showTerms = true; }
   closeTerms() { this.showTerms = false; }
 }
+// TODO: Replace with real signup service and route to dashboard after signup.

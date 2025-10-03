@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { SignInRequest } from '../../core/models/auth.model';
 
 @Component({
   selector: 'app-login',
@@ -18,66 +17,43 @@ export class LoginComponent {
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     remember: [false],
-    privacy: [false, Validators.requiredTrue],
-    terms: [false, Validators.requiredTrue],
   });
 
-  isLoading = false;
-  errorMessage = '';
-  successMessage = '';
+  submitting = false;
+  showError = false;
+  showSuccess = false;
+  errorText = 'Please check your email or password.';
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService,
-    private router: Router
-  ) {}
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {}
 
   get canSubmit(): boolean {
-    return this.form.valid && !this.isLoading;
+    return this.form.valid;
   }
 
-  submit() {
+  async submit() {
     if (!this.canSubmit) return;
-
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    const formValue = this.form.value;
-    const signInData: SignInRequest = {
-      email: formValue.email!,
-      password: formValue.password!
-    };
-
-    this.authService.signIn(signInData).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        
-        if (response.success) {
-          this.successMessage = response.message || 'Signed in successfully!';
-          
-          // Wait a moment to show success message, then redirect
-          setTimeout(() => {
-            this.router.navigate(['/dashboard']);
-          }, 1000);
-        } else {
-          this.errorMessage = response.error || 'Failed to sign in. Please check your credentials.';
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = 'An unexpected error occurred. Please try again.';
-        console.error('Login error:', error);
-      }
-    });
+    const { email, password } = this.form.value;
+    this.submitting = true;
+    try {
+      await this.auth.signIn(email!, password!);
+      this.showSuccess = true;
+      // Auto-dismiss toast and navigate shortly after
+      setTimeout(() => this.router.navigate(['/dashboard']), 1000);
+      setTimeout(() => this.closeSuccess(), 2500);
+    } catch (_e) {
+      this.errorText = 'Please check your email or password.';
+      this.showError = true;
+      // Auto-dismiss error toast
+      setTimeout(() => this.closeError(), 3000);
+    } finally {
+      this.submitting = false;
+    }
   }
 
-  // Modal state and handlers
-  showPrivacy = false;
-  showTerms = false;
+  closeError() { this.showError = false; }
+  closeSuccess() { this.showSuccess = false; }
+  goDashboard() { this.router.navigate(['/dashboard']); }
 
-  openPrivacy() { this.showPrivacy = true; }
-  closePrivacy() { this.showPrivacy = false; }
-  openTerms() { this.showTerms = true; }
-  closeTerms() { this.showTerms = false; }
+  // Removed privacy/terms agreement from login page
 }
+// In a real app, you'd handle auth via a service and route accordingly.

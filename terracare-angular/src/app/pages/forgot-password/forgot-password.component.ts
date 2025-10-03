@@ -2,8 +2,6 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { AuthService } from '../../core/services/auth.service';
-import { ResetPasswordRequest } from '../../core/models/auth.model';
 
 @Component({
   selector: 'app-forgot-password',
@@ -20,54 +18,14 @@ export class ForgotPasswordComponent {
     terms: [false, Validators.requiredTrue],
   });
 
-  isLoading = false;
-  errorMessage = '';
-  successMessage = '';
+  constructor(private fb: FormBuilder) {}
 
-  constructor(
-    private fb: FormBuilder,
-    private authService: AuthService
-  ) {}
-
-  get canSubmit(): boolean { 
-    return this.form.valid && !this.isLoading; 
-  }
+  get canSubmit(): boolean { return this.form.valid; }
 
   submit() {
     if (!this.canSubmit) return;
-
-    this.isLoading = true;
-    this.errorMessage = '';
-    this.successMessage = '';
-
-    const formValue = this.form.value;
-    const resetData: ResetPasswordRequest = {
-      email: formValue.email!
-    };
-
-    this.authService.resetPassword(resetData).subscribe({
-      next: (response) => {
-        this.isLoading = false;
-        
-        if (response.success) {
-          this.successMessage = response.message || 'Password reset email sent! Please check your inbox.';
-          this.form.reset({
-            email: '',
-            privacy: false,
-            terms: false
-          });
-        } else {
-          this.errorMessage = response.error || 'Failed to send password reset email. Please try again.';
-        }
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this.errorMessage = 'An unexpected error occurred. Please try again.';
-        console.error('Password reset error:', error);
-      }
-    });
+    alert('Password reset link sent (demo)');
   }
-
   // Modal state and handlers
   showPrivacy = false;
   showTerms = false;
@@ -76,3 +34,4 @@ export class ForgotPasswordComponent {
   openTerms() { this.showTerms = true; }
   closeTerms() { this.showTerms = false; }
 }
+// TODO: Hook up form submission to API.
