@@ -17,8 +17,8 @@ export class AuthService {
 		return data;
 	}
 
-	async signOut() {
-		const { error } = await this.supabase.client.auth.signOut();
+	async signOut(scope: 'global' | 'local' | 'others' = 'global') {
+		const { error } = await this.supabase.client.auth.signOut({ scope });
 		if (error) throw error;
 	}
 }

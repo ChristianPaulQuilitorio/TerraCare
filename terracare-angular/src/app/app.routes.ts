@@ -9,5 +9,6 @@ export const routes: Routes = [
 	{ path: 'forum', loadComponent: () => import('./pages/forum/forum.component').then(m => m.ForumComponent) },
 	{ path: 'knowledge', loadComponent: () => import('./pages/knowledge/knowledge.component').then(m => m.KnowledgeComponent) },
 	{ path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+	{ path: 'logout', loadComponent: () => import('./pages/logout/logout.component').then(m => m.LogoutComponent) },
 	{ path: '**', redirectTo: '' }
 ];
