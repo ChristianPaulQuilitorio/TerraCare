@@ -1,0 +1,14 @@
+@import '../login/login.component.scss';
+
+/* Additional overrides for signup can go here */
+
+.toast { top: 24px; }
+
+.verification-box {
+	margin-top: 12px;
+	padding: 12px;
+	background: rgba(42,122,42,0.06);
+	border: 1px solid rgba(42,122,42,0.12);
+	border-radius: 8px;
+	color: #1f4d1f;
+}

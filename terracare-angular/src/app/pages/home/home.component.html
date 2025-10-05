@@ -1,0 +1,87 @@
+<nav class="auth-nav">
+  <div class="nav-brand">🌱 TerraCare</div>
+  <div class="nav-links">
+    <a routerLink="/home">Home</a>
+    <a routerLink="/dashboard">Dashboard</a>
+    <a routerLink="/challenges">Challenges</a>
+    <a routerLink="/knowledge">Knowledge</a>
+    <a routerLink="/forum">Forum</a>
+    <a routerLink="/profile">Profile</a>
+    <a routerLink="/logout">Logout</a>
+  </div>
+</nav>
+
+<section class="welcome-section">
+  <div class="welcome-content">
+    <h1>Welcome back, {{ userProfile?.fullName || 'Eco Champion' }}!</h1>
+    <p class="welcome-subtitle">Ready to make a difference today?</p>
+  </div>
+</section>
+
+<section class="dashboard-overview">
+  <div class="container">
+    <h2>Your TerraCare Hub</h2>
+    <div class="quick-actions">
+      <div class="action-card" routerLink="/dashboard">
+        <div class="icon">📊</div>
+        <h3>My Dashboard</h3>
+        <p>Track your environmental impact and progress</p>
+      </div>
+      
+      <div class="action-card" routerLink="/challenges">
+        <div class="icon">🌱</div>
+        <h3>Active Challenges</h3>
+        <p>Join ongoing eco-initiatives and make an impact</p>
+      </div>
+      
+      <div class="action-card" routerLink="/knowledge">
+        <div class="icon">📚</div>
+        <h3>Knowledge Hub</h3>
+        <p>Learn sustainable practices and environmental science</p>
+      </div>
+      
+      <div class="action-card" routerLink="/forum">
+        <div class="icon">💬</div>
+        <h3>Community Forum</h3>
+        <p>Connect with like-minded environmental advocates</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="recent-activity">
+  <div class="container">
+    <h2>What's New</h2>
+    <div class="activity-grid">
+      <div class="activity-item">
+        <div class="activity-icon">🏆</div>
+        <div class="activity-content">
+          <h4>New Challenge Available</h4>
+          <p>Global Reforestation Initiative - Plant 1000 trees this month</p>
+        </div>
+      </div>
+      
+      <div class="activity-item">
+        <div class="activity-icon">📖</div>
+        <div class="activity-content">
+          <h4>Knowledge Article</h4>
+          <p>Learn about sustainable agriculture practices in your area</p>
+        </div>
+      </div>
+      
+      <div class="activity-item">
+        <div class="activity-icon">🌍</div>
+        <div class="activity-content">
+          <h4>Community Impact</h4>
+          <p>Our community has prevented 2.5 tons of CO2 emissions this week!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="container">
+    <p>&copy; 2025 TerraCare. Building a sustainable future together.</p>
+  </div>
+</footer>
