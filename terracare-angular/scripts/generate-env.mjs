@@ -11,6 +11,14 @@ const apiBase = process.env.API_BASE || '';
 const supabaseUrl = process.env.SUPABASE_URL || '';
 const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || '';
 
+if (!supabaseUrl || !supabaseAnonKey) {
+	console.error('\n[generate-env] ERROR: Missing required environment variables.');
+	if (!supabaseUrl) console.error(' - SUPABASE_URL is not set');
+	if (!supabaseAnonKey) console.error(' - SUPABASE_ANON_KEY is not set');
+	console.error('Add them in Vercel Project Settings (Production + Preview) or your local .env and rebuild.');
+	process.exit(1);
+}
+
 const banner = `// THIS FILE IS AUTO-GENERATED. DO NOT EDIT DIRECTLY.\n`;
 const body = `export const environment = {\n  production: true,\n  apiBase: '${apiBase}',\n  supabaseUrl: '${supabaseUrl}',\n  supabaseAnonKey: '${supabaseAnonKey}'\n};\n`;
 
