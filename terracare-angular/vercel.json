@@ -2,7 +2,7 @@
   "version": 2,
   "framework": "angular",
   "buildCommand": "npm run build",
-  "outputDirectory": "dist/terrdist/terracare-angular/browseracare-angular",
+  "outputDirectory": "dist/terracare-angular/browser",
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
