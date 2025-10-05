@@ -2,6 +2,6 @@
 export const environment = {
   production: true,
   apiBase: '',
-  supabaseUrl: '',
+  supabaseUrl: 'https://tyalzymvdnrzbwwtlcvj.supabase.co',
   supabaseAnonKey: ''
 };
