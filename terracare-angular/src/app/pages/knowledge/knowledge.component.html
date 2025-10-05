@@ -1,0 +1,25 @@
+<app-navbar />
+
+<section class="knowledge">
+  <h1>Knowledge Hub</h1>
+  <p>Explore articles, videos, guides, and infographics on sustainability.</p>
+
+  <p *ngIf="loading">Loading...</p>
+  <!-- Error suppressed: we fallback to seed items. If still empty, show a friendly note. -->
+  <p *ngIf="!loading && items?.length === 0" class="error">No knowledge items available right now.</p>
+
+  <div class="grid">
+    <div class="card" *ngFor="let item of items">
+      <h3>{{ item.title }}</h3>
+      <p>{{ item.description }}</p>
+    </div>
+  </div>
+</section>
+
+<section class="highlight">
+  <h2>Featured Resource Highlight</h2>
+  <div class="highlight-box">
+    <h3>The Urgent Need for Global Climate Action</h3>
+    <p>Climate change is our greatest challenge. Explore why action is critical now.</p>
+  </div>
+</section>

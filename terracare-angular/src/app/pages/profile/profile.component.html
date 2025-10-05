@@ -1,0 +1,153 @@
+<div class="profile-container">
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Loading your profile...</p>
+  </div>
+
+  <!-- Profile Content -->
+  <div *ngIf="!loading && user" class="profile-content">
+    <!-- Header Section -->
+    <div class="profile-header">
+      <div class="avatar">
+        <span class="avatar-text">{{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}</span>
+      </div>
+      <div class="header-info">
+        <h1>{{ user.fullName || 'User Profile' }}</h1>
+        <p class="user-email">{{ user.email }}</p>
+        <p class="member-since">Member since {{ formatDate(user.createdAt) }}</p>
+      </div>
+      <div class="header-actions">
+        <button 
+          *ngIf="!editing" 
+          class="btn primary" 
+          (click)="startEditing()"
+        >
+          Edit Profile
+        </button>
+      </div>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div *ngIf="message" class="message" [class.success]="!message.includes('Failed')" [class.error]="message.includes('Failed')">
+      {{ message }}
+    </div>
+
+    <!-- Profile Information -->
+    <div class="profile-sections">
+      <!-- Basic Information -->
+      <div class="section">
+        <h2>Basic Information</h2>
+        
+        <!-- View Mode -->
+        <div *ngIf="!editing" class="info-view">
+          <div class="info-item">
+            <label>Full Name</label>
+            <span>{{ user.fullName || 'Not provided' }}</span>
+          </div>
+          <div class="info-item">
+            <label>Email Address</label>
+            <span>{{ user.email }}</span>
+          </div>
+          <div class="info-item">
+            <label>User ID</label>
+            <span class="user-id">{{ user.id }}</span>
+          </div>
+        </div>
+
+        <!-- Edit Mode -->
+        <form *ngIf="editing" [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="edit-form">
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input 
+              type="text" 
+              id="fullName" 
+              formControlName="fullName"
+              placeholder="Enter your full name"
+            >
+            <small *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched" class="error">
+              Full name is required (minimum 2 characters)
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input 
+              type="email" 
+              id="email" 
+              formControlName="email"
+              placeholder="Enter your email"
+            >
+            <small *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched" class="error">
+              Please enter a valid email address
+            </small>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn secondary" 
+              (click)="cancelEditing()"
+              [disabled]="saving"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              class="btn primary" 
+              [disabled]="profileForm.invalid || saving"
+            >
+              {{ saving ? 'Saving...' : 'Save Changes' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Account Actions -->
+      <div class="section">
+        <h2>Account Actions</h2>
+        <div class="action-buttons">
+          <button class="btn secondary" routerLink="/home">
+            🏠 Back to Dashboard
+          </button>
+          <button class="btn secondary" routerLink="/dashboard">
+            📊 View My Stats
+          </button>
+          <button class="btn danger" (click)="logout()">
+            🚪 Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- App Statistics (Demo Data) -->
+      <div class="section">
+        <h2>Your TerraCare Impact</h2>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-number">5</div>
+            <div class="stat-label">Challenges Completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">1.2kg</div>
+            <div class="stat-label">CO₂ Saved</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">12</div>
+            <div class="stat-label">Articles Read</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number">3</div>
+            <div class="stat-label">Forum Posts</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not Logged In State -->
+  <div *ngIf="!loading && !user" class="not-logged-in">
+    <h2>Please Log In</h2>
+    <p>You need to be logged in to view your profile.</p>
+    <button class="btn primary" routerLink="/login">Go to Login</button>
+  </div>
+</div>
