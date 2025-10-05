@@ -13,7 +13,11 @@ export class SupabaseService {
 	get client(): SupabaseClient {
 			if (this._client) return this._client;
 			if (!environment.supabaseUrl || !environment.supabaseAnonKey) {
-				throw new Error('Supabase client accessed before configuration was provided.');
+				console.error('Supabase client accessed before configuration was provided. Returning placeholder client that will fail on use.');
+				// Return a proxy that throws on any property access beyond this point to avoid null checks everywhere.
+				return new Proxy({} as SupabaseClient, {
+					get() { throw new Error('Supabase not configured. Set SUPABASE_URL & SUPABASE_ANON_KEY and redeploy.'); }
+				});
 			}
 			const zoneSafeLock: any = createInMemoryLock();
 			const w = typeof window !== 'undefined' ? (window as any) : undefined;
@@ -37,6 +41,10 @@ export class SupabaseService {
 			if (w) w.__supabaseClient = this._client;
 			return this._client;
 	}
+}
+
+export function isSupabaseConfigured() {
+	return !!(environment.supabaseUrl && environment.supabaseAnonKey);
 }
 
 // Simple per-process async lock to avoid Navigator LockManager incompatibilities with zone.js
