@@ -4,48 +4,38 @@ import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
-	private _client: SupabaseClient;
+		private _client?: SupabaseClient;
 
 	constructor() {
-		if (!environment.supabaseUrl || !environment.supabaseAnonKey) {
-			console.error('Supabase configuration missing!');
-			console.log('Current config:', {
-				supabaseUrl: environment.supabaseUrl,
-				hasAnonKey: !!environment.supabaseAnonKey
-			});
-		}
-		// Provide a Zone-safe, cross-tab-agnostic lock to avoid Navigator LockManager issues
-		// and reuse a single client across HMR in the browser.
-		const zoneSafeLock: any = createInMemoryLock();
+			// Lazy init: actual client creation deferred until first access.
+	}
 
-		// Reuse the same client across HMR in the browser to prevent multiple instances contending for locks
-		const w = typeof window !== 'undefined' ? (window as any) : undefined;
-		const existing = w?.__supabaseClient as SupabaseClient | undefined;
-
-		if (existing) {
-			this._client = existing;
-		} else {
+	get client(): SupabaseClient {
+			if (this._client) return this._client;
+			if (!environment.supabaseUrl || !environment.supabaseAnonKey) {
+				throw new Error('Supabase client accessed before configuration was provided.');
+			}
+			const zoneSafeLock: any = createInMemoryLock();
+			const w = typeof window !== 'undefined' ? (window as any) : undefined;
+			const existing = w?.__supabaseClient as SupabaseClient | undefined;
+			if (existing) {
+				this._client = existing;
+				return existing;
+			}
 			this._client = createClient(
-				environment.supabaseUrl ?? '',
-				environment.supabaseAnonKey ?? '',
+				environment.supabaseUrl,
+				environment.supabaseAnonKey,
 				{
 					auth: {
 						persistSession: true,
 						autoRefreshToken: true,
 						detectSessionInUrl: true,
-						// Override default navigator.locks-based implementation
 						lock: zoneSafeLock,
 					},
 				}
 			);
-			if (w) {
-				w.__supabaseClient = this._client;
-			}
-		}
-	}
-
-	get client(): SupabaseClient {
-		return this._client;
+			if (w) w.__supabaseClient = this._client;
+			return this._client;
 	}
 }
 
