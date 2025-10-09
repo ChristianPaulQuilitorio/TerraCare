@@ -21,7 +21,7 @@ import { AuthService } from '../../core/services/auth.service';
         <li><a routerLink="/challenges">Challenges</a></li>
         <li><a routerLink="/knowledge">Knowledge Hub</a></li>
         <li><a routerLink="/forum">Forum</a></li>
-        <li *ngIf="isAuthenticated"><a routerLink="/dashboard">Profile</a></li>
+        <li *ngIf="isAuthenticated"><a routerLink="/profile">Profile</a></li>
       </ul>
       <ul class="navbar-actions">
         <li><a title="Search"><span class="icon-search"></span></a></li>

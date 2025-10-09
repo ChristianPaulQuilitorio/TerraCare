@@ -1,0 +1,14 @@
+{
+  "name": "terracare-monorepo-root",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Root package.json to forward scripts to terracare-angular",
+  "scripts": {
+    "install:frontend": "npm --prefix terracare-angular install",
+    "build:frontend": "npm --prefix terracare-angular run build",
+    "start:frontend": "npm --prefix terracare-angular run start",
+    "build": "npm run build:frontend",
+    "start": "npm run start:frontend",
+    "install": "npm run install:frontend && echo Root install completed"
+  }
+}

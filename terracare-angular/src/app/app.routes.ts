@@ -29,6 +29,16 @@ export const routes: Routes = [
 		loadComponent: () => import('./pages/challenges/challenges.component').then(m => m.ChallengesComponent),
 		canActivate: [AuthGuard]
 	},
+	{
+		path: 'challenges/browse',
+		loadComponent: () => import('./pages/challenges/browse-challenges.component').then(m => m.BrowseChallengesComponent),
+		canActivate: [AuthGuard]
+	},
+	{
+		path: 'challenges/progress',
+		loadComponent: () => import('./pages/challenges/challenge-progress.component').then(m => m.ChallengeProgressComponent),
+		canActivate: [AuthGuard]
+	},
 	{ 
 		path: 'forum', 
 		loadComponent: () => import('./pages/forum/forum.component').then(m => m.ForumComponent),
