@@ -5,15 +5,16 @@
     "ng": "ng",
     "start": "cross-env NODE_NO_WARNINGS=1 ng serve",
     "start:clean": "ng serve",
-    "serve:ssr": "cross-env NODE_NO_WARNINGS=1 ng run terracare-angular:build:development && node dist/terracare-angular/server/server.mjs",
-    "build:ssr": "cross-env NODE_NO_WARNINGS=1 ng run terracare-angular:build:production",
-  "build": "cross-env NODE_NO_WARNINGS=1 ng build",
-  "vercel-build": "npm run build:ssr",
-  "now-build": "npm run vercel-build",
+    "prebuild": "node scripts/generate-env.mjs",
+    "build": "cross-env NODE_NO_WARNINGS=1 ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "eslint . --ext .ts,.html --max-warnings=0",
-    "serve:ssr:terracare-angular": "node dist/terracare-angular/server/server.mjs"
+    "vercel:login": "vercel login",
+    "vercel:link": "vercel link",
+    "vercel:build": "npm run build",
+    "deploy:preview": "npm run vercel:build && vercel deploy --prebuilt",
+    "deploy:prod": "npm run vercel:build && vercel deploy --prebuilt --prod"
   },
   "private": true,
   "dependencies": {
@@ -48,6 +49,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.4.2"
+  "typescript": "~5.4.2",
+  "vercel": "^48.2.0"
   }
 }

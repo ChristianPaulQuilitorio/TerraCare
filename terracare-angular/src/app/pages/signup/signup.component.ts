@@ -24,11 +24,7 @@ export class SignupComponent {
 
   message = '';
   submitting = false;
-  showAgreeModal = false;
-  verificationSent = false;
-  verificationEmail = '';
-  resendBusy = false;
-  verificationCheckBusy = false;
+  showAgreeToast = false;
   constructor(
     private fb: FormBuilder, 
     private auth: AuthService,
@@ -59,7 +55,8 @@ export class SignupComponent {
     const agreedPrivacy = !!this.form.get('privacy')?.value;
     const agreedTerms = !!this.form.get('terms')?.value;
     if (!agreedPrivacy || !agreedTerms) {
-      this.showAgreeModal = true;
+      this.showAgreeToast = true;
+      setTimeout(() => this.showAgreeToast = false, 2500);
       return;
     }
 
@@ -68,47 +65,16 @@ export class SignupComponent {
     this.submitting = true;
     try {
       await this.auth.signUp(email!, password!, fullname!);
-      // Show verification message and offer resend
-      this.verificationSent = true;
-      this.verificationEmail = email || '';
-      this.message = 'Signup successful. A verification email has been sent.';
-      // Do not auto-redirect — wait for user to verify
+      this.message = 'Signup successful. Please check your email to confirm.';
+      // Redirect to profile page after successful signup
+      setTimeout(() => {
+        this.router.navigateByUrl('/profile');
+      }, 2000);
     } catch (e: any) {
       this.message = e?.message || 'Signup failed';
     } finally {
       this.submitting = false;
     }
-  }
-  
-    async resendVerification() {
-      if (!this.verificationEmail) return;
-      this.resendBusy = true;
-      try {
-        await this.auth.resendVerification(this.verificationEmail);
-        this.message = 'Verification email resent. Please check your inbox.';
-      } catch (e: any) {
-        this.message = e?.message || 'Failed to resend verification.';
-      } finally {
-        this.resendBusy = false;
-      }
-    }
-
-    async checkVerification() {
-      if (!this.verificationEmail) return;
-      this.verificationCheckBusy = true;
-      try {
-        const user = await this.auth.getCurrentUser();
-        if (user && user.email === this.verificationEmail) {
-          // Verified — redirect to login so the user can sign in
-          this.router.navigateByUrl('/login');
-        } else {
-          this.message = 'Email not verified yet. Please check your inbox or click resend.';
-        }
-      } catch (e: any) {
-        this.message = e?.message || 'Error checking verification status.';
-      } finally {
-        this.verificationCheckBusy = false;
-      }
   }
   // Modal state and handlers
   showPrivacy = false;

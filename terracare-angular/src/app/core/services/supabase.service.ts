@@ -4,49 +4,46 @@ import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SupabaseService {
-	private _client: SupabaseClient;
+	private _client?: SupabaseClient;
 
 	constructor() {
-		if (!environment.supabaseUrl || !environment.supabaseAnonKey) {
-			console.error('Supabase configuration missing!');
-			console.log('Current config:', {
-				supabaseUrl: environment.supabaseUrl,
-				hasAnonKey: !!environment.supabaseAnonKey
-			});
-		}
-		// Provide a Zone-safe, cross-tab-agnostic lock to avoid Navigator LockManager issues
-		// and reuse a single client across HMR in the browser.
-		const zoneSafeLock: any = createInMemoryLock();
-
-		// Reuse the same client across HMR in the browser to prevent multiple instances contending for locks
-		const w = typeof window !== 'undefined' ? (window as any) : undefined;
-		const existing = w?.__supabaseClient as SupabaseClient | undefined;
-
-		if (existing) {
-			this._client = existing;
-		} else {
-			this._client = createClient(
-				environment.supabaseUrl ?? '',
-				environment.supabaseAnonKey ?? '',
-				{
-					auth: {
-						persistSession: true,
-						autoRefreshToken: true,
-						detectSessionInUrl: true,
-						// Override default navigator.locks-based implementation
-						lock: zoneSafeLock,
-					},
-				}
-			);
-			if (w) {
-				w.__supabaseClient = this._client;
-			}
-		}
+		// Lazy init: actual client creation deferred until first access.
 	}
 
 	get client(): SupabaseClient {
+		if (this._client) return this._client;
+		if (!environment.supabaseUrl || !environment.supabaseAnonKey) {
+			console.error('Supabase client accessed before configuration was provided. Returning placeholder client that will fail on use.');
+			return new Proxy({} as SupabaseClient, {
+				get() { throw new Error('Supabase not configured. Set SUPABASE_URL & SUPABASE_ANON_KEY and redeploy.'); }
+			});
+		}
+		const zoneSafeLock: any = createInMemoryLock();
+		const w = typeof window !== 'undefined' ? (window as any) : undefined;
+		const existing = w?.__supabaseClient as SupabaseClient | undefined;
+		if (existing) {
+			this._client = existing;
+			return existing;
+		}
+		this._client = createClient(
+			environment.supabaseUrl,
+			environment.supabaseAnonKey,
+			{
+				auth: {
+					persistSession: true,
+					autoRefreshToken: true,
+					detectSessionInUrl: true,
+					lock: zoneSafeLock,
+				},
+			}
+		);
+		if (w) w.__supabaseClient = this._client;
 		return this._client;
 	}
+}
+
+export function isSupabaseConfigured() {
+	return !!(environment.supabaseUrl && environment.supabaseAnonKey);
 }
 
 // Simple per-process async lock to avoid Navigator LockManager incompatibilities with zone.js
@@ -88,3 +85,4 @@ function createInMemoryLock() {
 		}
 	};
 }
+

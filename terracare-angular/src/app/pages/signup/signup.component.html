@@ -28,13 +28,6 @@
 
   <button type="submit" class="login-btn" id="signupBtn" [disabled]="submitting">{{ submitting ? 'Creating account…' : 'Sign Up' }}</button>
   <p *ngIf="message">{{ message }}</p>
-  <div *ngIf="verificationSent" class="verification-box">
-    <p>A verification email has been sent to <strong>{{ verificationEmail }}</strong>. Please check your inbox and follow the link to verify your account.</p>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-      <button class="login-btn" (click)="resendVerification()" [disabled]="resendBusy">Resend verification email</button>
-      <button class="login-btn" (click)="checkVerification()" [disabled]="verificationCheckBusy">I've verified — go to Login</button>
-    </div>
-  </div>
 
     <p class="signup-text">
       Already have an account? <a routerLink="/login">Login</a>
@@ -56,10 +49,9 @@
   </form>
 </div>
 
-<!-- Toast: please agree (upper center) -->
-<div class="toast toast--error" *ngIf="showAgreeModal">
-  Please agree to the Privacy Policy and Terms to create an account.
-  <button class="toast__close" aria-label="Close" (click)="showAgreeModal = false">×</button>
+<!-- Toast: please agree -->
+<div class="toast toast--error" *ngIf="showAgreeToast">
+  Please agree to the Privacy Policy and Terms.
 </div>
 <div id="privacyModal" class="modal" *ngIf="showPrivacy" (click)="closePrivacy()">
   <div class="modal-content" (click)="$event.stopPropagation()">

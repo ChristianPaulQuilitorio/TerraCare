@@ -1,16 +1,18 @@
 import { Injectable } from '@angular/core';
-import { SupabaseService } from './supabase.service';
+import { SupabaseService, isSupabaseConfigured } from './supabase.service';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-	constructor(private supabase: SupabaseService) {
-		// Check if Supabase is properly configured
-		if (!this.supabase.client) {
-			console.error('Supabase client not properly initialized');
+	constructor(private supabase: SupabaseService) { }
+
+	private ensureConfigured() {
+		if (!isSupabaseConfigured()) {
+			throw new Error('Auth is not configured. Missing SUPABASE_URL or SUPABASE_ANON_KEY.');
 		}
 	}
 
 	async signUp(email: string, password: string, fullname?: string) {
+		this.ensureConfigured();
 		try {
 			const signUpData: any = { email, password };
 			
@@ -36,6 +38,7 @@ export class AuthService {
 	}
 
 	async signIn(email: string, password: string) {
+		this.ensureConfigured();
 		try {
 			const { data, error } = await this.supabase.client.auth.signInWithPassword({ email, password });
 			if (error) {
@@ -49,32 +52,14 @@ export class AuthService {
 		}
 	}
 
-	/**
-	 * Send a verification / magic link to the provided email.
-	 * Uses Supabase `signInWithOtp` to deliver an email link which can be
-	 * used for verification or passwordless sign-in. This is safe from the
-	 * client side and does not require a service role key.
-	 */
-	async resendVerification(email: string) {
-		try {
-			const { data, error } = await this.supabase.client.auth.signInWithOtp({ email });
-			if (error) {
-				console.error('Resend verification error:', error);
-				throw new Error(error.message || 'Failed to send verification');
-			}
-			return data;
-		} catch (error: any) {
-			console.error('Resend verification exception:', error);
-			throw new Error(error?.message || 'Failed to send verification - please check your connection');
-		}
-	}
-
 	async signOut(scope: 'global' | 'local' | 'others' = 'global') {
+		this.ensureConfigured();
 		const { error } = await this.supabase.client.auth.signOut({ scope });
 		if (error) throw error;
 	}
 
 	async getCurrentUser() {
+		if (!isSupabaseConfigured()) return null;
 		try {
 			const { data: { user }, error } = await this.supabase.client.auth.getUser();
 			if (error) {
