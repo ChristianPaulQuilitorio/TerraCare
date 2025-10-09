@@ -1,0 +1,90 @@
+<div class="login-container">
+  <img src="assets/icons/Gemini_Generated_Image_mfx6llmfx6llmfx6.png" alt="TerraCare logo" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
+  <h2>TerraCare</h2>
+
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <label for="fullname">Full Name</label>
+    <input
+      type="text"
+      id="fullname"
+      formControlName="fullname"
+      name="fullname"
+      placeholder="Your full name"
+      autocomplete="name"
+      required
+    >
+    <small *ngIf="form.get('fullname')?.invalid && form.get('fullname')?.touched" style="color:#b00020;">
+      Full name is required (2–80 characters).
+    </small>
+
+    <label for="email">Email Address</label>
+  <input type="email" id="email" formControlName="email" placeholder="name@example.com" required>
+
+    <label for="password">Password</label>
+  <input type="password" id="password" formControlName="password" placeholder="********" required>
+
+    <label for="confirm-password">Confirm Password</label>
+  <input type="password" id="confirm-password" formControlName="confirmPassword" placeholder="********" required>
+
+  <button type="submit" class="login-btn" id="signupBtn" [disabled]="submitting">{{ submitting ? 'Creating account…' : 'Sign Up' }}</button>
+  <p *ngIf="message">{{ message }}</p>
+
+    <p class="signup-text">
+      Already have an account? <a routerLink="/login">Login</a>
+    </p>
+
+    <p class="privacy-link">
+      <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="privacyCheck" formControlName="privacy">
+        I agree to the <a href="#" (click)="$event.preventDefault(); openPrivacy()">Privacy Agreement</a>
+      </label>
+    </p>
+
+    <p class="terms-link">
+      <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="termsCheck" formControlName="terms">
+        I agree to the <a href="#" (click)="$event.preventDefault(); openTerms()">Terms and Agreement</a>
+      </label>
+    </p>
+  </form>
+</div>
+
+<!-- Toast: please agree -->
+<div class="toast toast--error" *ngIf="showAgreeToast">
+  Please agree to the Privacy Policy and Terms.
+</div>
+<div id="privacyModal" class="modal" *ngIf="showPrivacy" (click)="closePrivacy()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Privacy Agreement</h3>
+    <p>
+      By creating an account, you agree to TerraCare’s Privacy Policy. We collect only the
+      information necessary to create and manage your account, improve your experience,
+      secure our platform, and communicate important updates. We do not sell your data.
+      You may request access, correction, or deletion of your personal information at any time.
+    </p>
+    <ul>
+      <li>Data we collect: name, email, basic usage analytics</li>
+      <li>How we use it: account access, app improvements, security</li>
+      <li>Your controls: export, correction, deletion on request</li>
+    </ul>
+    <button (click)="closePrivacy()">Close</button>
+  </div>
+ </div>
+
+<div id="termsModal" class="modal" *ngIf="showTerms" (click)="closeTerms()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <h3>Terms and Agreement</h3>
+    <p>
+      By using TerraCare, you agree to: (1) provide accurate information; (2) use the service
+      lawfully and respectfully; (3) not misuse, reverse-engineer, or disrupt the platform;
+      and (4) accept that features may change over time. Content you submit must not violate
+      any laws or third-party rights. TerraCare is provided “as is” without warranties.
+    </p>
+    <ul>
+      <li>Acceptable use: no abuse, spam, or unlawful activity</li>
+      <li>Accounts: you’re responsible for your credentials</li>
+      <li>Changes: we may update features and terms with notice</li>
+    </ul>
+    <button (click)="closeTerms()">Close</button>
+  </div>
+</div>
