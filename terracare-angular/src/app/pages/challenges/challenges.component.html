@@ -1,9 +1,11 @@
-<app-navbar />
+<app-navbar></app-navbar>
 
 <section class="hero">
   <h1>Ignite Your Impact</h1>
   <p>Explore eco-challenges to make a difference for our planet. Join a cause today!</p>
-  <button class="btn">Browse Challenges</button>
+  <div class="hero-actions">
+    <button class="btn" routerLink="/challenges/browse">Browse Challenges</button>
+  </div>
 </section>
 
 <section class="progress">
@@ -13,32 +15,32 @@
     <p>Challenges joined: <b>2</b></p>
     <p>Impact score: <b>1450</b></p>
     <p>Progress: <b>33%</b></p>
-    <button class="btn">View Detailed Progress</button>
+    <button class="btn" routerLink="/challenges/progress">View Detailed Progress</button>
   </div>
 </section>
 
 <section class="challenges">
   <h2>Discover Eco-Challenges</h2>
-  <div class="challenge-grid">
-    <div class="card">
-      <h3>Sustainable Commuting</h3>
-      <p>Adopt eco-friendly commuting habits like biking or walking.</p>
-      <button class="btn">Join Challenge</button>
+    <div class="challenge-grid">
+      <div class="card">
+        <h3>Sustainable Commuting</h3>
+        <p>Adopt eco-friendly commuting habits like biking or walking.</p>
+        <button class="btn" routerLink="/challenges/browse">Details</button>
+      </div>
+      <div class="card">
+        <h3>Community Clean-up Drive</h3>
+        <p>Join local clean-up efforts to reduce waste and protect nature.</p>
+        <button class="btn" routerLink="/challenges/browse">Details</button>
+      </div>
+      <div class="card">
+        <h3>Support Local Wildlife</h3>
+        <p>Help conserve wildlife by creating safe habitats.</p>
+        <button class="btn" routerLink="/challenges/browse">Details</button>
+      </div>
+      <div class="card">
+        <h3>Reduce Plastic Waste</h3>
+        <p>Minimize single-use plastics and encourage recycling.</p>
+        <button class="btn" routerLink="/challenges/browse">Details</button>
+      </div>
     </div>
-    <div class="card">
-      <h3>Community Clean-up Drive</h3>
-      <p>Join local clean-up efforts to reduce waste and protect nature.</p>
-      <button class="btn">Join Challenge</button>
-    </div>
-    <div class="card">
-      <h3>Support Local Wildlife</h3>
-      <p>Help conserve wildlife by creating safe habitats.</p>
-      <button class="btn">Join Challenge</button>
-    </div>
-    <div class="card">
-      <h3>Reduce Plastic Waste</h3>
-      <p>Minimize single-use plastics and encourage recycling.</p>
-      <button class="btn">Join Challenge</button>
-    </div>
-  </div>
 </section>
