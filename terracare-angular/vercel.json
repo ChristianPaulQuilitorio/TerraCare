@@ -1,10 +1,9 @@
 {
   "version": 2,
-  "framework": "angular",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist/terracare-angular/browser",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "builds": [
+    { "src": "dist/terracare-angular/browser/**/*", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
