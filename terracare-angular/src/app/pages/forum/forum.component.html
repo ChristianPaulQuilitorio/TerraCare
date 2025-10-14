@@ -2,13 +2,39 @@
 
 <section class="forum">
   <h1>Community Forum</h1>
-  <button class="btn">Start a New Discussion</button>
+
+  <!-- Create post box (Facebook-like) -->
+  <div class="create-post">
+    <div class="cp-top">
+      <div class="avatar">
+        <span class="avatar-text">{{ userName ? (userName.charAt(0) | uppercase) : 'U' }}</span>
+      </div>
+      <textarea id="forum-draft" [(ngModel)]="draftText" placeholder="What's on your mind, {{ userName || 'User' }}?" rows="2"
+        (keydown)="onDraftKeydown($event)" (input)="autoResize($event)"></textarea>
+    </div>
+    <div class="cp-actions">
+      <div class="quick-actions" style="display:flex; gap:8px; align-items:center;">
+        <button class="qa" (click)="triggerFileInput('image')"><span class="icon">🖼️</span> Photo/video</button>
+        <button class="qa" (click)="triggerFileInput('video')"><span class="icon">🎞️</span> Reel</button>
+        <input #fileInput type="file" accept="image/*,video/*" style="display:none" (change)="onFileSelected($event)">
+      </div>
+      <div class="post-actions" style="text-align:right;">
+        <button class="btn primary" (click)="publishPost()" [disabled]="!draftText.trim()">Post</button>
+      </div>
+    </div>
+    <div class="attachment-preview" *ngIf="attachedPreview">
+      <div class="preview">
+        <img *ngIf="attachedPreviewType==='image'" [src]="attachedPreview" alt="preview">
+        <video *ngIf="attachedPreviewType==='video'" [src]="attachedPreview" controls></video>
+      </div>
+      <button class="btn" (click)="clearAttachment()">Remove attachment</button>
+    </div>
+  </div>
 
   <div class="discussion-list">
-    <div class="discussion">Innovative Solutions for Plastic Waste in Oceans</div>
-    <div class="discussion">Community Gardens: Cultivating Sustainability</div>
-    <div class="discussion">The Impact of Fast Fashion</div>
-    <div class="discussion">Renewable Energy Adoption</div>
-    <div class="discussion">Sustainable Urban Living</div>
+    <div class="discussion" *ngFor="let p of posts">
+      <h3>{{ p.title || (p.author + ' · Just now') }}</h3>
+      <p>{{ p.body }}</p>
+    </div>
   </div>
 </section>

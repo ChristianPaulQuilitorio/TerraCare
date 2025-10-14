@@ -16,6 +16,9 @@ export class KnowledgeComponent {
   items: KnowledgeItem[] = [];
   loading = true;
   error?: string;
+  // UI state
+  activeFilter = 'All';
+  selectedItem: KnowledgeItem | null = null;
 
   constructor(private knowledge: KnowledgeService) {}
 
@@ -30,5 +33,27 @@ export class KnowledgeComponent {
       this.items = items;
       this.loading = false;
     });
+  }
+
+  setFilter(filter: string) {
+    this.activeFilter = filter;
+  }
+
+  get filteredItems() {
+    if (!this.items) return [];
+    if (!this.activeFilter || this.activeFilter === 'All') return this.items;
+    return this.items.filter(i => (i.category || '').toLowerCase() === this.activeFilter.toLowerCase());
+  }
+
+  openItem(item: KnowledgeItem) {
+    this.selectedItem = item;
+    setTimeout(() => {
+      const el = document.querySelector('.kc-modal') as HTMLElement | null;
+      el?.focus();
+    }, 0);
+  }
+
+  closeItem() {
+    this.selectedItem = null;
   }
 }

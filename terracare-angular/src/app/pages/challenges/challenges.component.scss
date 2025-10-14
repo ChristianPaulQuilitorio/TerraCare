@@ -8,15 +8,15 @@ body {
 .hero {
   text-align: center;
   padding: 60px 20px;
-  background: url("/assets/eco-bg.jpg") center/cover no-repeat;
-  color: white;
+  background: url("/assets/ecolife-bg.jpg") center/cover no-repeat;
+  color: black;
 }
 
 .hero h1 { font-size: 36px; }
 .hero p { margin: 10px 0 20px; }
 
 .btn {
-  background: #28a745;
+  background: #2E7D32;
   border: none;
   color: white;
   padding: 10px 16px;
@@ -35,6 +35,269 @@ body {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;
 }
 .card { background: #fff; padding: 20px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); text-align: center; }
+
+/* 🌿 Browse Challenges - Enhanced UI/UX */
+
+/* Hero section */
+.browse-hero {
+  text-align: center;
+  margin-top: 2rem;
+  margin-bottom: 1.5rem;
+  color: #2c3e50;
+  h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+  p {
+    font-size: 1.1rem;
+    color: #6b7a7a;
+  }
+}
+
+/* ✨ Marquee Carousel */
+.marquee {
+  margin: 30px 0;
+  position: relative;
+}
+
+.marquee-frame {
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #3b5c5c, #2e403f);
+  padding: 24px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  white-space: nowrap;
+}
+
+.image-container {
+  display: flex;
+  gap: 22px;
+  align-items: stretch;
+}
+
+.marquee-item {
+  flex: 0 0 auto;
+  width: 280px;
+  scroll-snap-align: start;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.marquee-item:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.marquee-card {
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.thumb {
+  height: 160px;
+  background-size: cover;
+  background-position: center;
+  transition: transform 0.4s ease;
+}
+
+.marquee-card:hover .thumb {
+  transform: scale(1.05);
+}
+
+.marquee-body {
+  padding: 14px;
+}
+
+.marquee-body h4 {
+  margin: 0 0 6px 0;
+  font-weight: 600;
+  color: #2d3a3a;
+}
+
+.marquee-body .muted {
+  color: #6c7d7d;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* 💡 Carousel controls */
+.marquee-controls {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.carousel-nav {
+  pointer-events: auto;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
+}
+
+.carousel-nav:hover {
+  background: #fff;
+  transform: scale(1.1);
+}
+
+/* 📋 Challenge list below carousel */
+.browse-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 18px;
+  padding: 2rem;
+}
+
+.browse-list .card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.browse-list .card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+}
+
+.btn {
+  background: #2E7D32;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background 0.25s ease;
+}
+
+.btn:hover {
+  background: #218838;
+}
+
+.btn.outline {
+  background: transparent;
+  border: 2px solid #1abc9c;
+  color: #1abc9c;
+}
+
+.btn.outline:hover {
+  background: #1abc9c;
+  color: #fff;
+}
+
+/* 🪄 Modal styling */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 14px;
+  max-width: 700px;
+  width: 90%;
+  padding: 1.5rem;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+  animation: popUp 0.35s ease;
+  outline: none;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+  margin: 0;
+  color: #2c3e50;
+}
+
+.close {
+  background: transparent;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #999;
+  transition: color 0.2s ease;
+}
+
+.close:hover {
+  color: #222;
+}
+
+.modal-body {
+  text-align: center;
+  .thumb {
+    width: 100%;
+    height: 220px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* ✨ Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+/* 📱 Mobile tweaks */
+@media (max-width: 720px) {
+  .marquee-item {
+    width: 220px;
+  }
+
+  .thumb {
+    height: 130px;
+  }
+
+  .browse-list {
+    padding: 1rem;
+  }
+}
+
+
 
 /* Progress page specific styles */
 .progress-page { padding: 28px; max-width: 1000px; margin: 0 auto; }

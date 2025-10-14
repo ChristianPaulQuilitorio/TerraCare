@@ -1,25 +1,85 @@
 <app-navbar />
 
-<section class="knowledge">
-  <h1>Knowledge Hub</h1>
-  <p>Explore articles, videos, guides, and infographics on sustainability.</p>
-
-  <p *ngIf="loading">Loading...</p>
-  <!-- Error suppressed: we fallback to seed items. If still empty, show a friendly note. -->
-  <p *ngIf="!loading && items?.length === 0" class="error">No knowledge items available right now.</p>
-
-  <div class="grid">
-    <div class="card" *ngFor="let item of items">
-      <h3>{{ item.title }}</h3>
-      <p>{{ item.description }}</p>
+<main class="knowledge-page">
+  <aside class="kc-sidebar">
+    <nav class="kc-nav">
+      <ul>
+        <li class="active">Home</li>
+        <li>Articles</li>
+        <li>Videos</li>
+        <li>Guides</li>
+        <li>Infographics</li>
+      </ul>
+    </nav>
+    <div class="kc-subscriptions">
+      <h4>Topics</h4>
+      <div class="chips">
+        <button class="chip">All</button>
+        <button class="chip">Waste</button>
+        <button class="chip">Energy</button>
+        <button class="chip">Transport</button>
+        <button class="chip">Biodiversity</button>
+      </div>
     </div>
-  </div>
-</section>
+  </aside>
 
-<section class="highlight">
-  <h2>Featured Resource Highlight</h2>
-  <div class="highlight-box">
-    <h3>The Urgent Need for Global Climate Action</h3>
-    <p>Climate change is our greatest challenge. Explore why action is critical now.</p>
+  <section class="kc-content">
+    <header class="kc-header">
+      <h1>Knowledge Hub</h1>
+      <p class="subtitle">Explore articles, videos, guides, and infographics on sustainability.</p>
+    </header>
+
+    <div class="kc-controls">
+      <div class="chips">
+        <button class="chip" [class.active]="activeFilter==='All'" (click)="setFilter('All')">All</button>
+        <button class="chip" [class.active]="activeFilter==='Latest'" (click)="setFilter('Latest')">Latest</button>
+        <button class="chip" [class.active]="activeFilter==='Popular'" (click)="setFilter('Popular')">Popular</button>
+        <button class="chip" [class.active]="activeFilter==='Recommended'" (click)="setFilter('Recommended')">Recommended</button>
+      </div>
+    </div>
+
+    <section class="kc-hero" *ngIf="filteredItems && filteredItems.length">
+      <div class="hero-card" (click)="openItem(filteredItems[0])" role="button" tabindex="0" (keyup.enter)="openItem(filteredItems[0])">
+        <div class="hero-thumb" [style.backgroundImage]="'url(' + (filteredItems[0].image || '/assets/ecolife-bg.jpg') + ')'"></div>
+        <div class="hero-body">
+          <h2>{{ filteredItems[0].title }}</h2>
+          <p>{{ filteredItems[0].description }}</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="kc-grid">
+      <p *ngIf="loading">Loading...</p>
+      <p *ngIf="!loading && items?.length === 0" class="error">No knowledge items available right now.</p>
+
+      <div class="thumb-grid">
+        <article class="thumb-card" *ngFor="let item of filteredItems" (click)="openItem(item)" role="button" tabindex="0" (keyup.enter)="openItem(item)">
+          <div class="thumb-image" [style.backgroundImage]="'url(' + (item.image || '/assets/ecolife-bg.jpg') + ')'">
+            <div class="play-overlay">▶</div>
+          </div>
+          <div class="thumb-meta">
+            <h3>{{ item.title }}</h3>
+            <p class="muted">{{ item.description }}</p>
+          </div>
+        </article>
+      </div>
+    </section>
+  </section>
+</main>
+
+<!-- Modal for item details -->
+<div class="modal-backdrop kc-modal-backdrop" *ngIf="selectedItem">
+  <div class="kc-modal" role="dialog" aria-modal="true" tabindex="-1">
+    <header class="kc-modal-header">
+      <h3>{{ selectedItem.title }}</h3>
+      <button class="close" (click)="closeItem()">✕</button>
+    </header>
+    <div class="kc-modal-body">
+  <div class="thumb-image large" [style.backgroundImage]="'url(' + (selectedItem.image || '/assets/ecolife-bg.jpg') + ')'"></div>
+  <p>{{ selectedItem.description }}</p>
+    </div>
+    <footer class="kc-modal-footer">
+      <button class="btn" (click)="closeItem()">Close</button>
+    </footer>
   </div>
-</section>
+</div>
