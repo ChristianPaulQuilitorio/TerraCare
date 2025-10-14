@@ -71,6 +71,34 @@ export function app(): express.Express {
     res.json({ ok: true, ts: new Date().toISOString() });
   });
 
+  // Dev-only: initialize storage bucket if missing (requires service role key)
+  server.post('/api/storage/init', async (req, res) => {
+    try {
+      const isProd = process.env['NODE_ENV'] === 'production';
+      const host = req.headers.host || '';
+      if (isProd) return res.status(403).json({ error: 'Not allowed in production' });
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(500).json({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' });
+      }
+      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      // Try to get the bucket
+      const bucketId = 'forum-attachments';
+      const { data: bucket, error: getErr } = await (adminClient as any).storage.getBucket(bucketId);
+      if (!bucket) {
+        // Create the bucket as public with common mime types
+        const { error: createErr } = await (adminClient as any).storage.createBucket(bucketId, {
+          public: true,
+          fileSizeLimit: '52428800', // 50MB
+          allowedMimeTypes: ['image/*', 'video/*', 'text/plain']
+        });
+        if (createErr) return res.status(500).json({ error: createErr.message });
+      }
+      return res.json({ ok: true, bucket: bucketId });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'init failed' });
+    }
+  });
+
   // Knowledge API - GET all items
   server.get('/api/knowledge', async (_req, res) => {
     try {
