@@ -11,3 +11,38 @@
 .icon-search, .icon-logout { width: 20px; height: 20px; background-size: contain; background-repeat: no-repeat; background-position: center; }
 .icon-search { background: url('data:image/svg+xml;utf8,<svg fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') center/contain no-repeat; }
 .icon-logout { background: url('data:image/svg+xml;utf8,<svg fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16l-4-4m0 0l4-4m-4 4h12"/><path d="M17 16v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>') center/contain no-repeat; }
+
+/* Mobile hamburger toggle */
+.nav-toggle { display: none; }
+.nav-hamburger {
+	display: none;
+	width: 42px;
+	height: 36px;
+	cursor: pointer;
+	margin-left: 12px;
+	align-items: center;
+	justify-content: center;
+}
+.nav-hamburger span { display: block; height: 3px; width: 22px; background: #2e7d32; margin: 4px 0; border-radius: 2px; transition: transform 0.2s ease; }
+
+/* container that wraps links and actions (for mobile slide-down) */
+.navbar-menu { display: flex; align-items: center; gap: 12px; width: 100%; }
+
+@media (max-width: 840px) {
+	.navbar { padding: 12px 16px; }
+	.navbar-links { display: none; position: absolute; left: 0; right: 0; top: 64px; background: #fff; flex-direction: column; gap: 0; padding: 10px 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+	.navbar-links li { margin: 6px 0; }
+	.navbar-links li a { display: block; padding: 10px 12px; }
+	.navbar-actions { display: none; }
+	.nav-hamburger { display: flex; }
+
+	/* When toggle checked, show menu */
+	.nav-toggle:checked + .nav-hamburger + .navbar-menu .navbar-links,
+	.nav-toggle:checked + .nav-hamburger + .navbar-menu .navbar-actions { display: flex; }
+
+	/* Place actions inside menu for mobile when opened */
+	.nav-toggle:checked + .nav-hamburger + .navbar-menu { flex-direction: column; align-items: stretch; }
+
+	/* Small logo image on mobile */
+	.navbar-logo .logo-img { width: 44px; height: 44px; }
+}

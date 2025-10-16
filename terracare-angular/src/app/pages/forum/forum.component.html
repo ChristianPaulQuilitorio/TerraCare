@@ -1,4 +1,3 @@
-
 <app-navbar />
 
 <section class="forum">
@@ -11,16 +10,16 @@
         <span class="avatar-text">{{ userName ? (userName.charAt(0) | uppercase) : 'U' }}</span>
       </div>
       <textarea id="forum-draft" [(ngModel)]="draftText" placeholder="What's on your mind, {{ userName || 'User' }}?" rows="2"
-        (keydown)="onDraftKeydown($event)" (input)="autoResize($event)" [disabled]="!isLoggedIn"></textarea>
+        (keydown)="onDraftKeydown($event)" (input)="autoResize($event)"></textarea>
     </div>
     <div class="cp-actions">
       <div class="quick-actions" style="display:flex; gap:8px; align-items:center;">
-        <button class="qa" (click)="triggerFileInput('image')" [disabled]="!isLoggedIn"><span class="icon">🖼️</span> Photo/video</button>
-        <button class="qa" (click)="triggerFileInput('video')" [disabled]="!isLoggedIn"><span class="icon">🎞️</span> Reel</button>
+        <button class="qa" (click)="triggerFileInput('image')"><span class="icon">🖼️</span> Photo/video</button>
+        <button class="qa" (click)="triggerFileInput('video')"><span class="icon">🎞️</span> Reel</button>
         <input #fileInput type="file" accept="image/*,video/*" style="display:none" (change)="onFileSelected($event)">
       </div>
       <div class="post-actions" style="text-align:right;">
-        <button class="btn primary" (click)="publishPost()" [disabled]="!draftText.trim() || !isLoggedIn || loading">Post</button>
+        <button class="btn primary" (click)="publishPost()" [disabled]="!draftText.trim()">Post</button>
       </div>
     </div>
     <div class="attachment-preview" *ngIf="attachedPreview">
@@ -30,20 +29,12 @@
       </div>
       <button class="btn" (click)="clearAttachment()">Remove attachment</button>
     </div>
-    <div *ngIf="errorMsg" style="color:#c00; margin-top:8px;">{{ errorMsg }}</div>
   </div>
 
   <div class="discussion-list">
     <div class="discussion" *ngFor="let p of posts">
-      <h3>
-        {{ p.author_name || (p.author_id | slice:0:8) }} · {{ formatTimestamp(p.created_at) }}
-        <button *ngIf="isLoggedIn && userId === p.author_id" class="btn" style="float:right; background:#c62828" (click)="onDelete(p)">Delete</button>
-      </h3>
+      <h3>{{ p.title || (p.author_name + ' · ' + formatTimestamp(p.created_at)) }}</h3>
       <p>{{ p.content }}</p>
-      <div *ngIf="p.attachment_url">
-        <img *ngIf="p.attachment_type==='image'" [src]="p.attachment_url" alt="attachment" style="max-width:320px; max-height:180px; margin-top:8px;">
-        <video *ngIf="p.attachment_type==='video'" [src]="p.attachment_url" controls style="max-width:320px; max-height:180px; margin-top:8px;"></video>
-      </div>
     </div>
   </div>
 </section>

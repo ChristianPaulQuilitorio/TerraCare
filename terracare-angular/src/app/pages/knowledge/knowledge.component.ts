@@ -19,6 +19,15 @@ export class KnowledgeComponent {
   // UI state
   activeFilter = 'All';
   selectedItem: KnowledgeItem | null = null;
+  // Upload form state
+  showUploadForm = false;
+  uploadTitle = '';
+  uploadDescription = '';
+  uploadCategory = 'Articles';
+  selectedFile: File | null = null;
+  previewUrl: string | null = null;
+  uploadLoading = false;
+  uploadError: string | null = null;
 
   constructor(private knowledge: KnowledgeService) {}
 
@@ -33,6 +42,63 @@ export class KnowledgeComponent {
       this.items = items;
       this.loading = false;
     });
+  }
+
+  onFileSelected(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    this.selectedFile = input.files[0];
+    this.uploadError = null;
+    // create preview for images only
+    if (this.selectedFile.type.startsWith('image/')) {
+      this.previewUrl = URL.createObjectURL(this.selectedFile);
+    } else {
+      this.previewUrl = null;
+    }
+  }
+
+  async submitUpload() {
+    if (!this.uploadTitle) {
+      this.uploadError = 'Please add a title.';
+      return;
+    }
+    this.uploadLoading = true;
+    this.uploadError = null;
+    try {
+      let url: string | null = null;
+      if (this.selectedFile) {
+        url = await this.knowledge.uploadFileToStorage(this.selectedFile, 'knowledge');
+      }
+      const created = await this.knowledge.create({
+        title: this.uploadTitle,
+        description: this.uploadDescription,
+        category: this.uploadCategory,
+        url: url ?? undefined,
+        type: this.selectedFile ? this.selectedFile.type : undefined,
+      });
+      if (created) {
+        // prepend to local items so user sees it immediately
+        this.items = [created as KnowledgeItem].concat(this.items || []);
+        this.resetUploadForm();
+        this.showUploadForm = false;
+      } else {
+        this.uploadError = 'Failed to create item.';
+      }
+    } catch (err: any) {
+      this.uploadError = err?.message || 'Upload failed.';
+    } finally {
+      this.uploadLoading = false;
+    }
+  }
+
+  resetUploadForm() {
+    this.uploadTitle = '';
+    this.uploadDescription = '';
+    this.uploadCategory = 'Articles';
+    this.selectedFile = null;
+    if (this.previewUrl) URL.revokeObjectURL(this.previewUrl);
+    this.previewUrl = null;
+    this.uploadError = null;
   }
 
   setFilter(filter: string) {

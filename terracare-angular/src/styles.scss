@@ -1,1 +1,51 @@
 /* You can add global styles to this file, and also import other style files */
+
+:root {
+	--container-max: 1200px;
+	--brand-green: #2E7D32;
+	--muted: #6b7a6b;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+
+.container {
+	width: 100%;
+	padding: 0 16px;
+	margin: 0 auto;
+	max-width: var(--container-max);
+}
+
+body {
+	margin: 0;
+	font-family: "Segoe UI", Arial, sans-serif;
+	line-height: 1.6;
+	background: #f8f9f9;
+	color: #333;
+}
+
+/* Basic responsive utilities */
+.row { display: flex; gap: 16px; }
+.col { flex: 1 1 0%; }
+
+/* Make images responsive by default */
+img { max-width: 100%; height: auto; display: block; }
+
+/* Breakpoints */
+@media (max-width: 1100px) {
+	:root { --container-max: 940px; }
+}
+
+@media (max-width: 768px) {
+	:root { --container-max: 640px; }
+	.row { flex-direction: column; }
+	.navbar { padding: 12px 16px; }
+}
+
+@media (max-width: 480px) {
+	:root { --container-max: 420px; }
+}
+
+/* Small utilities for touch targets */
+.touch-large { padding: 12px 16px; border-radius: 8px; }
+

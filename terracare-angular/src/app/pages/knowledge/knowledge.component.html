@@ -4,21 +4,21 @@
   <aside class="kc-sidebar">
     <nav class="kc-nav">
       <ul>
-        <li class="active">Home</li>
-        <li>Articles</li>
-        <li>Videos</li>
-        <li>Guides</li>
-        <li>Infographics</li>
+  <li [class.active]="activeFilter==='All'" (click)="setFilter('All')">Home</li>
+        <li [class.active]="activeFilter==='Articles'" (click)="setFilter('Articles')">Articles</li>
+        <li [class.active]="activeFilter==='Videos'" (click)="setFilter('Videos')">Videos</li>
+        <li [class.active]="activeFilter==='Guides'" (click)="setFilter('Guides')">Guides</li>
+        <li [class.active]="activeFilter==='Infographics'" (click)="setFilter('Infographics')">Infographics</li>
       </ul>
     </nav>
     <div class="kc-subscriptions">
       <h4>Topics</h4>
       <div class="chips">
-        <button class="chip">All</button>
-        <button class="chip">Waste</button>
-        <button class="chip">Energy</button>
-        <button class="chip">Transport</button>
-        <button class="chip">Biodiversity</button>
+        <button class="chip" [class.active]="activeFilter==='All'" (click)="setFilter('All')">All</button>
+        <button class="chip" [class.active]="activeFilter==='Waste'" (click)="setFilter('Waste')">Waste</button>
+        <button class="chip" [class.active]="activeFilter==='Energy'" (click)="setFilter('Energy')">Energy</button>
+        <button class="chip" [class.active]="activeFilter==='Transport'" (click)="setFilter('Transport')">Transport</button>
+        <button class="chip" [class.active]="activeFilter==='Biodiversity'" (click)="setFilter('Biodiversity')">Biodiversity</button>
       </div>
     </div>
   </aside>
@@ -35,6 +35,38 @@
         <button class="chip" [class.active]="activeFilter==='Latest'" (click)="setFilter('Latest')">Latest</button>
         <button class="chip" [class.active]="activeFilter==='Popular'" (click)="setFilter('Popular')">Popular</button>
         <button class="chip" [class.active]="activeFilter==='Recommended'" (click)="setFilter('Recommended')">Recommended</button>
+      </div>
+      <div class="controls-actions">
+        <button class="btn" (click)="showUploadForm = !showUploadForm">{{ showUploadForm ? 'Cancel' : 'Add Resource' }}</button>
+      </div>
+    </div>
+
+    <!-- Upload form (inline) -->
+    <div class="upload-panel" *ngIf="showUploadForm">
+      <div class="upload-grid">
+        <div class="upload-fields">
+          <input class="input" placeholder="Title" [value]="uploadTitle" (input)="uploadTitle = $any($event.target).value" />
+          <textarea class="textarea" placeholder="Short description" (input)="uploadDescription = $any($event.target).value">{{ uploadDescription }}</textarea>
+          <div class="row">
+            <select class="select" (change)="uploadCategory = $any($event.target).value">
+              <option value="Articles">Articles</option>
+              <option value="Videos">Videos</option>
+              <option value="Guides">Guides</option>
+              <option value="Infographics">Infographics</option>
+            </select>
+            <input type="file" accept="image/*,video/*,application/pdf" (change)="onFileSelected($event)" />
+          </div>
+          <div class="actions-row">
+            <button class="btn primary" (click)="submitUpload()" [disabled]="uploadLoading">{{ uploadLoading ? 'Uploading...' : 'Publish' }}</button>
+            <button class="btn" (click)="resetUploadForm()" [disabled]="uploadLoading">Reset</button>
+          </div>
+          <p class="muted" *ngIf="uploadError">{{ uploadError }}</p>
+        </div>
+        <div class="upload-preview">
+          <p *ngIf="!previewUrl && !selectedFile">No file selected</p>
+          <img *ngIf="previewUrl" [src]="previewUrl" alt="preview" />
+          <p *ngIf="selectedFile && !previewUrl">Selected: {{ selectedFile.name }}</p>
+        </div>
       </div>
     </div>
 

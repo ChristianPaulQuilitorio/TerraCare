@@ -15,19 +15,30 @@ import { AuthService } from '../../core/services/auth.service';
           <span class="sr-only">TerraCare</span>
         </a>
       </div>
-      <ul class="navbar-links">
-        <li><a [routerLink]="isAuthenticated ? '/home' : '/'">Home</a></li>
-        <li><a routerLink="/dashboard">Dashboard</a></li>
-        <li><a routerLink="/challenges">Challenges</a></li>
-        <li><a routerLink="/knowledge">Knowledge Hub</a></li>
-        <li><a routerLink="/forum">Forum</a></li>
-        <li *ngIf="isAuthenticated"><a routerLink="/profile">Profile</a></li>
-      </ul>
-      <ul class="navbar-actions">
-        <li><a title="Search"><span class="icon-search"></span></a></li>
-        <li *ngIf="isAuthenticated"><a routerLink="/logout" title="Logout"><span class="icon-logout"></span></a></li>
-        <li *ngIf="!isAuthenticated"><a routerLink="/login" title="Login">Login</a></li>
-      </ul>
+
+      <!-- Mobile toggle (checkbox technique, pure CSS) -->
+      <input id="nav-toggle" class="nav-toggle" type="checkbox" aria-hidden="true" />
+      <label for="nav-toggle" class="nav-hamburger" aria-label="Toggle navigation">
+        <span></span>
+        <span></span>
+        <span></span>
+      </label>
+
+      <div class="navbar-menu">
+        <ul class="navbar-links">
+          <li><a [routerLink]="isAuthenticated ? '/home' : '/'">Home</a></li>
+          <li><a routerLink="/dashboard">Dashboard</a></li>
+          <li><a routerLink="/challenges">Challenges</a></li>
+          <li><a routerLink="/knowledge">Knowledge Hub</a></li>
+          <li><a routerLink="/forum">Forum</a></li>
+          <li *ngIf="isAuthenticated"><a routerLink="/profile">Profile</a></li>
+        </ul>
+        <ul class="navbar-actions">
+          <li><a title="Search"><span class="icon-search"></span></a></li>
+          <li *ngIf="isAuthenticated"><a routerLink="/logout" title="Logout"><span class="icon-logout"></span></a></li>
+          <li *ngIf="!isAuthenticated"><a routerLink="/login" title="Login">Login</a></li>
+        </ul>
+      </div>
     </nav>
   `,
   styleUrls: ['./navbar.component.scss'],

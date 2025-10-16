@@ -61,6 +61,29 @@ body {
   position: relative;
 }
 
+/* Roblox-like browse grid styles */
+.browse-controls { padding: 16px 24px; display:flex; justify-content:space-between; align-items:center; }
+.search-row { display:flex; gap:12px; width:100%; max-width:980px; margin:0 auto; }
+.search { flex:1; padding:10px 12px; border-radius:8px; border:1px solid #e6f3ea; }
+.sort { padding:10px 12px; border-radius:8px; border:1px solid #e6f3ea; }
+
+.featured { padding: 0 24px; margin-bottom: 18px; }
+.featured-card { display:flex; gap:12px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 8px 24px rgba(0,0,0,0.12); }
+.featured-thumb { width: 360px; height: 200px; background-size: cover; background-position:center; position:relative; }
+.play-large { position:absolute; bottom:12px; left:12px; background:#2E7D32; color:#fff; border:none; padding:8px 12px; border-radius:6px; cursor:pointer; }
+.featured-body { padding:12px 16px; display:flex; flex-direction:column; justify-content:center; }
+
+.browse-grid { padding: 0 24px 24px; display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap:16px; }
+.game-card { background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.08); }
+.card-thumb { height: 140px; background-size:cover; background-position:center; position:relative; cursor:pointer; }
+.play-overlay { position:absolute; right:8px; bottom:8px; background: rgba(0,0,0,0.6); color:#fff; padding:6px 8px; border-radius:6px; }
+.game-meta { padding:12px; }
+.game-meta h4 { margin:0 0 6px 0; }
+.small { font-size:0.9rem; }
+.meta-row { display:flex; gap:8px; align-items:center; margin-top:8px; }
+.pill { background:#f0f7f2; color:#2E7D32; padding:4px 8px; border-radius:999px; font-size:0.85rem; }
+.btn.small { padding:6px 10px; font-size:0.85rem; }
+
 .marquee-frame {
   overflow-x: auto;
   overflow-y: hidden;
@@ -228,6 +251,18 @@ body {
   animation: popUp 0.35s ease;
   outline: none;
 }
+
+.modal-form { max-width: 860px; }
+.form-body { display:flex; flex-direction:column; gap:12px; }
+.field { display:flex; flex-direction:column; gap:6px; }
+.label-text { font-weight:600; color:#2c3e50; }
+.form-input, .form-textarea { padding:10px; border-radius:8px; border:1px solid #e6f3ea; }
+.form-textarea { min-height:100px; resize:vertical; }
+.image-row { display:flex; gap:8px; align-items:center; }
+.preview-area img { max-width:300px; border-radius:8px; display:block; }
+.form-footer { display:flex; gap:12px; justify-content:flex-end; }
+.btn.primary { background:#2E7D32; color:#fff; border:none; }
+.muted.error { color:#b00020; }
 
 .modal-header {
   display: flex;
