@@ -27,6 +27,7 @@ create table if not exists public.challenges (
 	creator_id uuid not null references auth.users(id) on delete cascade,
 	title text not null,
 	description text,
+	image text,
 	category text,
 	status text not null default 'active' check (status in ('draft','active','completed')),
 	visibility text not null default 'public' check (visibility in ('public','private')),
@@ -35,6 +36,10 @@ create table if not exists public.challenges (
 	created_at timestamptz not null default now(),
 	updated_at timestamptz not null default now()
 );
+
+-- Ensure image column exists on legacy installs
+alter table if exists public.challenges
+  add column if not exists image text;
 
 -- Participants (join a challenge)
 create table if not exists public.challenge_participants (
@@ -126,6 +131,7 @@ create table if not exists public.posts (
 	id uuid primary key default gen_random_uuid(),
 	author_id uuid not null references auth.users(id) on delete cascade,
 	author_name text,
+	author_avatar_url text,
 	title text not null,
 	content text not null,
 	is_public boolean not null default true,
@@ -136,6 +142,10 @@ create table if not exists public.posts (
 );
 
 create index if not exists idx_posts_public_time on public.posts(is_public, created_at desc);
+
+-- Ensure author_avatar_url exists on legacy installs
+alter table if exists public.posts
+	add column if not exists author_avatar_url text;
 
 -- Knowledge hub (already used by the app)
 create table if not exists public.knowledge (

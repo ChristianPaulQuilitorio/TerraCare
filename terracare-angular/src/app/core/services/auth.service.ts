@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { SupabaseService } from './supabase.service';
+import type { Session, User } from '@supabase/supabase-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
@@ -74,18 +75,25 @@ export class AuthService {
 		if (error) throw error;
 	}
 
+	async getSession(): Promise<Session | null> {
+		try {
+			const { data: { session }, error } = await this.supabase.client.auth.getSession();
+			if (error) return null;
+			return session;
+		} catch {
+			return null;
+		}
+	}
+
 	async getCurrentUser() {
+		// Avoid triggering AuthSessionMissingError in logged-out or early-hydration states
+		const session = await this.getSession();
+		if (!session) return null;
 		try {
 			const { data: { user }, error } = await this.supabase.client.auth.getUser();
-			if (error) {
-				console.warn('Auth error getting user:', error);
-				// Don't throw error, just return null for unauthenticated state
-				return null;
-			}
-			return user;
-		} catch (error: any) {
-			console.warn('Exception getting current user:', error?.message || error);
-			// Return null instead of throwing to prevent app crashes
+			if (error) return null;
+			return user as User | null;
+		} catch {
 			return null;
 		}
 	}

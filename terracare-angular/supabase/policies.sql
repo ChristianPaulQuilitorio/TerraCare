@@ -99,3 +99,62 @@ using (
 	and (name like 'forum/' || auth.uid() || '/%')
 );
 
+-- Storage bucket policies for challenge-attachments (images under challenges/<uid>/...)
+drop policy if exists "challenges_public_read" on storage.objects;
+create policy "challenges_public_read" on storage.objects for select
+using (bucket_id = 'challenge-attachments');
+
+drop policy if exists "challenges_user_upload" on storage.objects;
+create policy "challenges_user_upload" on storage.objects for insert
+with check (
+	bucket_id = 'challenge-attachments'
+	and auth.role() = 'authenticated'
+	and (name like 'challenges/' || auth.uid() || '/%')
+);
+
+drop policy if exists "challenges_user_update" on storage.objects;
+create policy "challenges_user_update" on storage.objects for update
+using (
+	bucket_id = 'challenge-attachments'
+	and auth.role() = 'authenticated'
+	and (name like 'challenges/' || auth.uid() || '/%')
+);
+
+drop policy if exists "challenges_user_delete" on storage.objects;
+create policy "challenges_user_delete" on storage.objects for delete
+using (
+	bucket_id = 'challenge-attachments'
+	and auth.role() = 'authenticated'
+	and (name like 'challenges/' || auth.uid() || '/%')
+);
+
+-- Storage bucket policies for avatars
+-- Public can read avatars; authenticated users can write/delete only their own files under avatars/<uid>/...
+drop policy if exists "avatars_public_read" on storage.objects;
+create policy "avatars_public_read" on storage.objects for select
+using (bucket_id = 'avatars');
+
+drop policy if exists "avatars_user_upload" on storage.objects;
+create policy "avatars_user_upload" on storage.objects for insert
+with check (
+	bucket_id = 'avatars'
+	and auth.role() = 'authenticated'
+	and (name like 'avatars/' || auth.uid() || '/%')
+);
+
+drop policy if exists "avatars_user_update" on storage.objects;
+create policy "avatars_user_update" on storage.objects for update
+using (
+	bucket_id = 'avatars'
+	and auth.role() = 'authenticated'
+	and (name like 'avatars/' || auth.uid() || '/%')
+);
+
+drop policy if exists "avatars_user_delete" on storage.objects;
+create policy "avatars_user_delete" on storage.objects for delete
+using (
+	bucket_id = 'avatars'
+	and auth.role() = 'authenticated'
+	and (name like 'avatars/' || auth.uid() || '/%')
+);
+

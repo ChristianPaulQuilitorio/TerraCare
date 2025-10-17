@@ -7,10 +7,27 @@
 
   <!-- Profile Content -->
   <div *ngIf="!loading && user" class="profile-content">
+    <!-- Simple cropper dialog -->
+    <div *ngIf="cropDialogOpen" class="modal-backdrop">
+      <div class="modal">
+        <h3>Crop your photo</h3>
+        <div class="cropper" style="width: 320px; height: 320px; margin: 12px auto; position: relative; overflow: hidden; border-radius: 8px; background: #000;">
+          <img *ngIf="cropSrc" [src]="cropSrc" alt="crop" style="position:absolute; top:50%; left:50%; transform: translate(-50%,-50%); max-width:none; width:auto; height:100%;"/>
+        </div>
+        <div *ngIf="cropError" class="message error" style="margin-top:8px;">{{ cropError }}</div>
+        <div class="form-actions" style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+          <button class="btn secondary" (click)="cancelCrop()" [disabled]="cropping">Cancel</button>
+          <button class="btn primary" (click)="confirmCrop()" [disabled]="cropping">{{ cropping ? 'Processing...' : 'Save' }}</button>
+        </div>
+      </div>
+    </div>
     <!-- Header Section -->
     <div class="profile-header">
       <div class="avatar">
-        <span class="avatar-text">{{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}</span>
+        <img *ngIf="avatarUrl; else noAvatar" [src]="avatarUrl" alt="avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;"/>
+        <ng-template #noAvatar>
+          <span class="avatar-text">{{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}</span>
+        </ng-template>
       </div>
       <div class="header-info">
         <h1>{{ user.fullName || 'User Profile' }}</h1>
@@ -25,6 +42,11 @@
         >
           Edit Profile
         </button>
+        <label class="btn secondary" style="margin-left:8px; cursor:pointer;">
+          {{ avatarUploading ? 'Uploading...' : 'Change Photo' }}
+          <input type="file" accept="image/*" (change)="onAvatarFileSelected($event)" style="display:none;" [disabled]="avatarUploading" />
+        </label>
+        <button class="btn danger" style="margin-left:8px;" (click)="removeAvatar()" [disabled]="avatarUploading || !avatarUrl">Remove Photo</button>
       </div>
     </div>
 

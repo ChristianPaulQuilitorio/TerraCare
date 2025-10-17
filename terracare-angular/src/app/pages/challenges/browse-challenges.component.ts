@@ -3,6 +3,7 @@ import { NavbarComponent } from '../../shared/navbar/navbar.component';
 import { Router } from '@angular/router';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { CommonModule } from '@angular/common';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-browse-challenges',
@@ -76,6 +77,17 @@ import { CommonModule } from '@angular/common';
             <label class="field">
               <span class="label-text">Short description</span>
               <textarea class="form-textarea" placeholder="Short description" (input)="newDescription = $any($event.target).value">{{ newDescription }}</textarea>
+            </label>
+
+            <label class="field">
+              <span class="label-text">Cover image (optional)</span>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                <input #imgInput type="file" accept="image/*" (change)="onImageSelected($event)" />
+                <button class="btn" type="button" (click)="clearImage()" *ngIf="imagePreview">Remove</button>
+              </div>
+              <div class="attachment-preview" *ngIf="imagePreview" style="margin-top:8px;">
+                <img [src]="imagePreview" alt="preview" style="max-width:100%; max-height:200px; border-radius:8px;" />
+              </div>
             </label>
 
             <label class="field">
@@ -160,6 +172,8 @@ export class BrowseChallengesComponent implements OnInit {
   newTitle = '';
   newDescription = '';
   newImageUrl = '';
+  imageFile: File | null = null;
+  imagePreview: string | null = null;
   createError: string | null = null;
   uploadLoading = false;
   tasks: Array<{ title: string; detail?: string }> = [{ title: '' }];
@@ -187,14 +201,85 @@ export class BrowseChallengesComponent implements OnInit {
   openCreateModal() { this.showCreateModal = true; }
   closeCreateModal() { this.showCreateModal = false; this.createError = null; }
 
+  onImageSelected(e: Event) {
+    const inp = e.target as HTMLInputElement | null;
+    if (!inp || !inp.files || !inp.files.length) return;
+    const f = inp.files[0]!;
+    if (!f.type.startsWith('image/')) {
+      alert('Please choose an image file.');
+      return;
+    }
+    this.imageFile = f;
+    try { this.imagePreview && URL.revokeObjectURL(this.imagePreview); } catch {}
+    this.imagePreview = URL.createObjectURL(f);
+    setTimeout(() => { if (inp) inp.value = ''; }, 200);
+  }
+
+  clearImage() {
+    this.imageFile = null;
+    if (this.imagePreview) { try { URL.revokeObjectURL(this.imagePreview); } catch {} }
+    this.imagePreview = null;
+  }
+
   async createChallenge() {
     if (!this.newTitle.trim()) { this.createError = 'Title is required'; return; }
     try {
+      // Ensure user is authenticated; challenges RLS requires creator_id = auth.uid()
+      const { data: { user }, error: userErr } = await this.supabase.client.auth.getUser();
+      if (userErr) {
+        console.warn('Auth getUser error:', userErr);
+      }
+      if (!user) {
+        this.createError = 'Please sign in to create a challenge.';
+        return;
+      }
       // Simplified minimal insert (no author_id/image) to work with minimal schemas
       this.uploadLoading = true;
+      // Optional: upload cover image to Storage
+      let imageUrl: string | undefined;
+      if (this.imageFile) {
+        const bucket = 'challenge-attachments';
+        const path = `challenges/${user.id}/${Date.now()}-${this.imageFile.name}`;
+        let { error: upErr } = await this.supabase.client.storage.from(bucket).upload(path, this.imageFile, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+        if (upErr?.message?.toLowerCase().includes('bucket not found')) {
+          try {
+            const apiBase = (environment.apiBase || '').replace(/\/$/, '');
+            const resp = await fetch(`${apiBase}/api/storage/init`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ bucketId: bucket })
+            });
+            if (!resp.ok) {
+              try {
+                const j = await resp.json();
+                this.createError = j?.error || `Bucket init failed (${resp.status})`;
+              } catch {
+                this.createError = `Bucket init failed (${resp.status})`;
+              }
+              throw new Error(this.createError || 'Bucket init failed');
+            }
+            const retry = await this.supabase.client.storage.from(bucket).upload(path, this.imageFile, {
+              cacheControl: '3600',
+              upsert: false,
+            });
+            upErr = retry.error || null;
+          } catch {}
+        }
+        if (upErr) {
+          this.createError = upErr.message || 'Bucket not found';
+          throw upErr;
+        }
+        imageUrl = this.supabase.client.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+      }
+
       const payload = {
+        creator_id: user.id,
         title: this.newTitle,
         description: this.newDescription,
+        image: imageUrl ?? null,
         created_at: new Date().toISOString(),
       } as any;
       const res = await this.supabase.client.from('challenges').insert([payload]).select().limit(1);
@@ -207,7 +292,8 @@ export class BrowseChallengesComponent implements OnInit {
       if (created) {
         // prepend locally and close modal
         this.challenges = [created].concat(this.challenges || []);
-        this.newTitle = this.newDescription = this.newImageUrl = '';
+  this.newTitle = this.newDescription = this.newImageUrl = '';
+  this.clearImage();
         // Best-effort: insert tasks into a 'challenge_tasks' table if it exists
         try {
           const challengeId = created.id ?? created['id'] ?? null;

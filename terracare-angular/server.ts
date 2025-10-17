@@ -1,6 +1,8 @@
 import { APP_BASE_HREF } from '@angular/common';
 import { CommonEngine } from '@angular/ssr';
 import express from 'express';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'node:url';
 import { dirname, join, resolve } from 'node:path';
 import bootstrap from './src/main.server';
@@ -19,14 +21,38 @@ export function app(): express.Express {
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
+  // Security headers
+  server.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP by default (tune if you add strict CSP)
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  // Basic rate-limiting for API endpoints
+  const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 300, // limit each IP
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  server.use('/api/', apiLimiter);
+
   // Body parsers for API routes
   server.use(express.json());
   server.use(express.urlencoded({ extended: true }));
 
-  // Basic CORS for dev when front-end runs on a different origin
+  // Tight CORS: allow only configured origins
+  const isProd = process.env['NODE_ENV'] === 'production';
+  const allowedOrigins = (process.env['ALLOWED_ORIGINS'] || (isProd ? '' : 'http://localhost:4200'))
+    .split(',')
+    .map(o => o.trim())
+    .filter(Boolean);
   server.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    const origin = req.headers.origin as string | undefined;
+    if (origin && allowedOrigins.includes(origin)) {
+      res.header('Access-Control-Allow-Origin', origin);
+    }
+    res.header('Vary', 'Origin');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     if (req.method === 'OPTIONS') {
       res.sendStatus(204);
@@ -75,14 +101,19 @@ export function app(): express.Express {
   server.post('/api/storage/init', async (req, res) => {
     try {
       const isProd = process.env['NODE_ENV'] === 'production';
-      const host = req.headers.host || '';
       if (isProd) return res.status(403).json({ error: 'Not allowed in production' });
+      // Require admin token in dev to prevent arbitrary access
+      const adminToken = process.env['ADMIN_TOKEN'] || '';
+      if (adminToken) {
+        const provided = (req.headers['x-admin-token'] as string | undefined) || '';
+        if (provided !== adminToken) return res.status(403).json({ error: 'Forbidden' });
+      }
       if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
         return res.status(500).json({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' });
       }
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      // Try to get the bucket
-      const bucketId = 'forum-attachments';
+  const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  // Try to get the bucket (allow specifying bucketId via body for flexibility)
+  const bucketId = (req.body && typeof req.body.bucketId === 'string' && req.body.bucketId) || 'forum-attachments';
       const { data: bucket, error: getErr } = await (adminClient as any).storage.getBucket(bucketId);
       if (!bucket) {
         // Create the bucket as public with common mime types
@@ -97,6 +128,36 @@ export function app(): express.Express {
     } catch (e: any) {
       return res.status(500).json({ error: e?.message || 'init failed' });
     }
+  });
+
+  // Dev-only: check if a storage bucket exists
+  server.get('/api/storage/bucket/:id', async (req, res) => {
+    try {
+      const isProd = process.env['NODE_ENV'] === 'production';
+      if (isProd) return res.status(403).json({ error: 'Not allowed in production' });
+      const adminToken = process.env['ADMIN_TOKEN'] || '';
+      if (adminToken) {
+        const provided = (req.headers['x-admin-token'] as string | undefined) || '';
+        if (provided !== adminToken) return res.status(403).json({ error: 'Forbidden' });
+      }
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        return res.status(500).json({ error: 'Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY' });
+      }
+      const bucketId = req.params['id'];
+      if (!bucketId) return res.status(400).json({ error: 'bucket id required' });
+      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      const { data: bucket } = await (adminClient as any).storage.getBucket(bucketId);
+      return res.json({ exists: !!bucket, bucket: bucketId });
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'check failed' });
+    }
+  });
+
+  // Dev-only: expose server-side Supabase project URL for diagnostics (no secrets)
+  server.get('/api/storage/info', (_req, res) => {
+    const isProd = process.env['NODE_ENV'] === 'production';
+    if (isProd) return res.status(403).json({ error: 'Not allowed in production' });
+    return res.json({ supabaseUrl: SUPABASE_URL || null });
   });
 
   // Knowledge API - GET all items
