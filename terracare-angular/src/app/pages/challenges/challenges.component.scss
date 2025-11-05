@@ -352,6 +352,14 @@ body {
 .progress-bar { height:14px; background:#e6f3ea; border-radius:999px; overflow:hidden; margin:8px 0; border:1px solid #dfeee0; }
 .progress-fill { height:100%; background:linear-gradient(90deg,#3b8b4a,#2E7D32); width:0%; transition:width 600ms ease; }
 
+/* Smaller progress bar variant used in cards */
+.progress-bar.small { height:10px; border-radius:999px; }
+.progress-bar.small .progress-fill { transition: width 400ms ease; }
+
+.task-list { list-style: none; padding: 0; margin: 8px 0 0 0; }
+.task-list li { padding: 6px 0; border-bottom: 1px dashed #eef6ee; }
+.task-list li label { cursor: pointer; font-size: 0.95rem; }
+
 .milestones { margin-top:8px; }
 .milestones ul { list-style:none; padding:0; margin:10px 0 0 0; }
 .milestones li { display:flex; justify-content:space-between; gap:12px; padding:12px; border-radius:8px; background:#fbfff9; margin-bottom:8px; }

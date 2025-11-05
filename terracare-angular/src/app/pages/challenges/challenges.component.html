@@ -12,9 +12,14 @@
   <h2>Your Journey So Far</h2>
   <div class="progress-box">
     <p><strong>My Challenge Progress</strong></p>
-    <p>Challenges joined: <b>2</b></p>
+  <p>Challenges joined: <b>{{ joinedCount }}</b></p>
     <p>Impact score: <b>1450</b></p>
-    <p>Progress: <b>33%</b></p>
+    <div style="margin:8px 0;">
+      <div class="progress-bar" style="height:12px; border-radius:999px; overflow:hidden; background:#e9f7ef; border:1px solid #dfeee0;">
+        <div class="progress-fill" style="width:33%; height:100%; background:linear-gradient(90deg,#3b8b4a,#2E7D32);"></div>
+      </div>
+      <p class="muted" style="margin:6px 0 0;">33% complete</p>
+    </div>
     <button class="btn" routerLink="/challenges/progress">View Detailed Progress</button>
   </div>
 </section>

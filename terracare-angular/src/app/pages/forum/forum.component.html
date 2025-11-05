@@ -33,26 +33,8 @@
 
   <div class="discussion-list">
     <div class="discussion" *ngFor="let p of posts">
-      <div class="discussion__header" style="display:flex; align-items:center; gap:8px;">
-        <div class="avatar" style="width:32px; height:32px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#eee; font-weight:600;">
-          <img *ngIf="p.author_avatar_url" [src]="p.author_avatar_url" alt="avatar" style="width:100%; height:100%; object-fit:cover;"/>
-          <span *ngIf="!p.author_avatar_url">{{ (p.author_name || p.author_id).charAt(0) | uppercase }}</span>
-        </div>
-        <div>
-          <strong>{{ p.author_name || (p.author_id | slice:0:8) }}</strong>
-          <span class="muted">· {{ formatTimestamp(p.created_at) }}</span>
-        </div>
-      </div>
-      <div class="discussion__body">
-        <p style="white-space:pre-wrap;">{{ p.content }}</p>
-        <div class="media" *ngIf="p.attachment_url">
-          <img *ngIf="p.attachment_type==='image'" [src]="p.attachment_url" alt="attachment" style="max-width:100%; border-radius:8px;"/>
-          <video *ngIf="p.attachment_type==='video'" [src]="p.attachment_url" controls style="max-width:100%; border-radius:8px;"></video>
-        </div>
-      </div>
-      <div class="discussion__actions">
-        <button class="btn danger" *ngIf="isLoggedIn && userId===p.author_id" (click)="onDelete(p)">Delete</button>
-      </div>
+      <h3>{{ p.title || (p.author_name + ' · ' + formatTimestamp(p.created_at)) }}</h3>
+      <p>{{ p.content }}</p>
     </div>
   </div>
 </section>
