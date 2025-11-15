@@ -22,7 +22,6 @@
   "build": "cross-env NODE_NO_WARNINGS=1 ng build --configuration production",
   "build:dev": "cross-env NODE_NO_WARNINGS=1 ng build --configuration development",
     "vercel-build": "npm run build",
-    "now-build": "npm run vercel-build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "eslint . --ext .ts,.html --max-warnings=0",
