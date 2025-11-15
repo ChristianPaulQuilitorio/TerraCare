@@ -1,90 +1,80 @@
-<div class="login-container">
-  <img src="assets/icons/Gemini_Generated_Image_mfx6llmfx6llmfx6.png" alt="TerraCare logo" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
-  <h2>TerraCare</h2>
-
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <label for="fullname">Full Name</label>
-    <input
-      type="text"
-      id="fullname"
-      formControlName="fullname"
-      name="fullname"
-      placeholder="Your full name"
-      autocomplete="name"
-      required
-    >
-    <small *ngIf="form.get('fullname')?.invalid && form.get('fullname')?.touched" style="color:#b00020;">
-      Full name is required (2–80 characters).
-    </small>
-
-    <label for="email">Email Address</label>
-  <input type="email" id="email" formControlName="email" placeholder="name@example.com" required>
-
-    <label for="password">Password</label>
-  <input type="password" id="password" formControlName="password" placeholder="********" required>
-
-    <label for="confirm-password">Confirm Password</label>
-  <input type="password" id="confirm-password" formControlName="confirmPassword" placeholder="********" required>
-
-  <button type="submit" class="login-btn" id="signupBtn" [disabled]="submitting">{{ submitting ? 'Creating account…' : 'Sign Up' }}</button>
-  <p *ngIf="message">{{ message }}</p>
-
-    <p class="signup-text">
-      Already have an account? <a routerLink="/login">Login</a>
-    </p>
-
-    <p class="privacy-link">
-      <label style="display:flex; align-items:center; gap:6px;">
-        <input type="checkbox" id="privacyCheck" formControlName="privacy">
-        I agree to the <a href="#" (click)="$event.preventDefault(); openPrivacy()">Privacy Agreement</a>
-      </label>
-    </p>
-
-    <p class="terms-link">
-      <label style="display:flex; align-items:center; gap:6px;">
-        <input type="checkbox" id="termsCheck" formControlName="terms">
-        I agree to the <a href="#" (click)="$event.preventDefault(); openTerms()">Terms and Agreement</a>
-      </label>
-    </p>
-  </form>
-</div>
-
-<!-- Toast: please agree -->
-<div class="toast toast--error" *ngIf="showAgreeToast">
-  Please agree to the Privacy Policy and Terms.
-</div>
-<div id="privacyModal" class="modal" *ngIf="showPrivacy" (click)="closePrivacy()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <h3>Privacy Agreement</h3>
-    <p>
-      By creating an account, you agree to TerraCare’s Privacy Policy. We collect only the
-      information necessary to create and manage your account, improve your experience,
-      secure our platform, and communicate important updates. We do not sell your data.
-      You may request access, correction, or deletion of your personal information at any time.
-    </p>
-    <ul>
-      <li>Data we collect: name, email, basic usage analytics</li>
-      <li>How we use it: account access, app improvements, security</li>
-      <li>Your controls: export, correction, deletion on request</li>
-    </ul>
-    <button (click)="closePrivacy()">Close</button>
+<mat-card appearance="outlined">
+  <div class="auth-header" mat-dialog-title>
+  <img class="app-logo" src="assets/TerraCareLogo.png" alt="TerraCare logo" />
+    <h2 class="brand-name">Create your account</h2>
   </div>
- </div>
+  <div mat-dialog-content>
+    <p class="subtitle">Join the TerraCare community and start making an impact.</p>
 
-<div id="termsModal" class="modal" *ngIf="showTerms" (click)="closeTerms()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
-    <h3>Terms and Agreement</h3>
-    <p>
-      By using TerraCare, you agree to: (1) provide accurate information; (2) use the service
-      lawfully and respectfully; (3) not misuse, reverse-engineer, or disrupt the platform;
-      and (4) accept that features may change over time. Content you submit must not violate
-      any laws or third-party rights. TerraCare is provided “as is” without warranties.
-    </p>
-    <ul>
-      <li>Acceptable use: no abuse, spam, or unlawful activity</li>
-      <li>Accounts: you’re responsible for your credentials</li>
-      <li>Changes: we may update features and terms with notice</li>
-    </ul>
-    <button (click)="closeTerms()">Close</button>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="two-col">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Full Name</mat-label>
+        <mat-icon matPrefix>person</mat-icon>
+        <input matInput id="fullname" formControlName="fullname" autocomplete="name" placeholder="Your full name" required>
+        <mat-error *ngIf="form.get('fullname')?.touched && form.get('fullname')?.invalid">
+          Full name is required (2–80 characters)
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Email Address</mat-label>
+        <mat-icon matPrefix>mail</mat-icon>
+        <input matInput type="email" id="email" formControlName="email" autocomplete="email" placeholder="name@example.com" required>
+        <mat-error *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+          Please enter a valid email address
+        </mat-error>
+      </mat-form-field>
+      </div>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Password</mat-label>
+        <mat-icon matPrefix>lock</mat-icon>
+        <input matInput [type]="hidePassword ? 'password' : 'text'" id="password" formControlName="password" autocomplete="new-password" placeholder="••••••••" required>
+        <button type="button" mat-icon-button matSuffix (click)="hidePassword = !hidePassword" [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'">
+          <mat-icon>{{ hidePassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+        </button>
+        <mat-error *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+          Password is required (min 6 characters)
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Confirm Password</mat-label>
+        <mat-icon matPrefix>lock</mat-icon>
+        <input matInput [type]="hideConfirm ? 'password' : 'text'" id="confirm-password" formControlName="confirmPassword" autocomplete="new-password" placeholder="Repeat password" required>
+        <button type="button" mat-icon-button matSuffix (click)="hideConfirm = !hideConfirm" [attr.aria-label]="hideConfirm ? 'Show confirm password' : 'Hide confirm password'">
+          <mat-icon>{{ hideConfirm ? 'visibility' : 'visibility_off' }}</mat-icon>
+        </button>
+        <mat-error *ngIf="form.hasError('mismatch') && form.get('confirmPassword')?.touched">
+          Passwords do not match
+        </mat-error>
+      </mat-form-field>
+
+      <mat-checkbox formControlName="privacy">
+        I agree to the <a href="#" (click)="$event.preventDefault(); openPrivacy()">Privacy Policy</a>
+      </mat-checkbox>
+      <mat-checkbox formControlName="terms">
+        I agree to the <a href="#" (click)="$event.preventDefault(); openTerms()">Terms of Use</a>
+      </mat-checkbox>
+
+      <button mat-raised-button color="primary" id="signupBtn" type="submit" [disabled]="submitting">
+        {{ submitting ? 'Creating account…' : 'Sign Up' }}
+      </button>
+
+      <p *ngIf="message" class="auth-message">{{ message }}</p>
+      <div *ngIf="verificationSent" class="verification-box">
+        <p>A verification email has been sent to <strong>{{ verificationEmail }}</strong>. Please check your inbox and follow the link to verify your account.</p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+          <button mat-stroked-button class="tc-outline" (click)="resendVerification()" [disabled]="resendBusy">Resend verification email</button>
+          <button mat-raised-button class="tc-primary" (click)="checkVerification()" [disabled]="verificationCheckBusy">I've verified — go to Login</button>
+        </div>
+      </div>
+
+      <div class="footer-links">
+        <span>Already have an account?</span>
+        <a href="#" (click)="$event.preventDefault(); openLogin()" class="tc-link">Login</a>
+      </div>
+    </form>
   </div>
-</div>
+</mat-card>

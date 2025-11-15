@@ -30,7 +30,16 @@ This app includes a minimal SSR Express API backed by Supabase.
 - supabaseUrl
 - supabaseAnonKey
 
-3) Database table expected: `knowledge` with columns:
+3) Database tables used (minimum set created by `supabase/schema.sql`):
+
+- `profiles` — user profile metadata
+- `challenges` — challenge definitions (now includes `base_points` 1-100 for scoring)
+- `challenge_tasks` — tasks inside a challenge
+- `challenge_participants` — users who joined a challenge (denormalized `progress` %)
+- `user_challenge_tasks` — per-user task completion rows (drives progress trigger)
+- `challenge_history` — point awarding + audit trail (proof attachments saved in Storage; history stores JSON details)
+- `challenge_scores` — aggregated per-challenge totals (maintained by trigger on history)
+- `knowledge` — knowledge hub articles
 
 - title (text)
 - description (text)
@@ -88,3 +97,39 @@ npm run build
 ## Notes
 - SSR is enabled; dev server will compile both browser and server bundles.
 - To change the port, append `--port <number>` to the start script.
+- Scoring System:
+	- When creating a challenge you set `Base Points (1-100)`. This value is awarded once when a participant marks the challenge 'Done'.
+	- Participants upload a proof file (image/video/PDF) on the Progress page. The file is stored in the `challenge-proofs` storage bucket and a single history row with action `completed` + points is inserted.
+	- Database triggers automatically recalc `challenge_scores` and participant `progress`.
+	- Impact Score is the sum of `total_points` across all rows in `challenge_scores` for the user; new users show 0.
+	- Duplicate completion attempts are ignored (guard checks existing `challenge_history` row with action `completed`).
+	- If the `base_points` column hasn't been migrated yet, creation falls back silently to default (10) and a warning toast is shown.
+
+	## PowerShell & curl: sending JSON safely
+
+	When testing the server with PowerShell and curl, PowerShell can mangled JSON if you pass unquoted variables or write files with the default encoding (UTF-16 LE). Use these patterns to avoid `Invalid JSON body` errors from the server:
+
+	- Write a UTF-8 file and post it (recommended):
+
+	```powershell
+	Set-Content -Path request.json -Value '{"messages":[{"role":"user","content":"Hello from file"}],"stream":false}' -Encoding utf8
+	curl.exe --noproxy localhost -sS -X POST "http://localhost:4000/api/ai/chat" `
+		-H "Content-Type: application/json" `
+		--data-binary "@request.json" -i
+	```
+
+	- Pipe a PowerShell object as JSON to curl (no temp file):
+
+	```powershell
+	$payload = @{ messages = @(@{ role = 'user'; content = 'Hello from PS object' }); stream = $false }
+	$payload | ConvertTo-Json -Depth 5 -Compress | curl.exe --noproxy localhost -sS -X POST "http://localhost:4000/api/ai/chat" `
+		-H "Content-Type: application/json" --data-binary "@-" -i
+	```
+
+	- Set env var for current session then start server (PowerShell one-liner requires a semicolon):
+
+	```powershell
+	$env:CEREBRAS_API_KEY = 'sk-...'; npm run dev:server
+	```
+
+	These tips avoid common pitfalls: PowerShell here-strings default to UTF-16 LE (BOM), unquoted variables can lose JSON quotes, and the `curl` alias in some PowerShell installs maps to different behavior — use `curl.exe` to call the native curl binary.

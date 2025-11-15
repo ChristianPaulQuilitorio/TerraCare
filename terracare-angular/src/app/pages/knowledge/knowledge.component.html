@@ -1,25 +1,93 @@
-<app-navbar />
+<main class="knowledge-page mat-app-background">
+  <div class="kc-flex-layout">
+    <section class="kc-main" style="width:100%">
+      <header class="kc-header">
+        <h1 class="desktop-title" *ngIf="!isHandset">Knowledge Hub</h1>
+        <p class="subtitle">Explore articles, videos, guides, and infographics on sustainability.</p>
+        <div class="header-actions">
+          <button mat-stroked-button color="primary" (click)="showUploadForm = !showUploadForm">{{ showUploadForm ? 'Cancel Upload' : 'Add Resource' }}</button>
+        </div>
+      </header>
 
-<section class="knowledge">
-  <h1>Knowledge Hub</h1>
-  <p>Explore articles, videos, guides, and infographics on sustainability.</p>
-
-  <p *ngIf="loading">Loading...</p>
-  <!-- Error suppressed: we fallback to seed items. If still empty, show a friendly note. -->
-  <p *ngIf="!loading && items?.length === 0" class="error">No knowledge items available right now.</p>
-
-  <div class="grid">
-    <div class="card" *ngFor="let item of items">
-      <h3>{{ item.title }}</h3>
-      <p>{{ item.description }}</p>
-    </div>
+      <!-- Inline filters under the header -->
+      <section class="kc-filters">
+        <div class="filters-row">
+          <span class="filters-label">Categories</span>
+          <mat-chip-listbox aria-label="Categories" class="filters-chips">
+            <mat-chip-option (click)="setFilter('All')" [selected]="activeFilter==='All'">All</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Articles')" [selected]="activeFilter==='Articles'">Articles</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Videos')" [selected]="activeFilter==='Videos'">Videos</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Guides')" [selected]="activeFilter==='Guides'">Guides</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Infographics')" [selected]="activeFilter==='Infographics'">Infographics</mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+        <div class="filters-row">
+          <span class="filters-label">Topics</span>
+          <mat-chip-listbox aria-label="Topics" class="filters-chips">
+            <mat-chip-option (click)="setFilter('All')" [selected]="activeFilter==='All'">All</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Waste')" [selected]="activeFilter==='Waste'">Waste</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Energy')" [selected]="activeFilter==='Energy'">Energy</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Transport')" [selected]="activeFilter==='Transport'">Transport</mat-chip-option>
+            <mat-chip-option (click)="setFilter('Biodiversity')" [selected]="activeFilter==='Biodiversity'">Biodiversity</mat-chip-option>
+          </mat-chip-listbox>
+        </div>
+      </section>
+      <section *ngIf="showUploadForm" class="upload-mat">
+        <mat-card class="upload-card">
+          <h2 mat-card-title>Upload Resource</h2>
+          <mat-card-content>
+            <form (submit)="$event.preventDefault(); submitUpload()" class="upload-form" novalidate>
+              <mat-form-field appearance="fill">
+                <mat-label>Title</mat-label>
+                <input matInput [value]="uploadTitle" (input)="uploadTitle = $any($event.target).value" required />
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Description</mat-label>
+                <textarea matInput rows="3" (input)="uploadDescription = $any($event.target).value">{{ uploadDescription }}</textarea>
+              </mat-form-field>
+              <mat-form-field appearance="fill">
+                <mat-label>Category</mat-label>
+                <mat-select [value]="uploadCategory" (selectionChange)="uploadCategory = $any($event.value)">
+                  <mat-option value="Articles">Articles</mat-option>
+                  <mat-option value="Videos">Videos</mat-option>
+                  <mat-option value="Guides">Guides</mat-option>
+                  <mat-option value="Infographics">Infographics</mat-option>
+                </mat-select>
+              </mat-form-field>
+              <div class="file-row">
+                <input type="file" accept="image/*,video/*,application/pdf" (change)="onFileSelected($event)" />
+                <span class="muted" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+              </div>
+              <div class="actions-row">
+                <button mat-raised-button color="primary" type="button" (click)="submitUpload()" [disabled]="uploadLoading || !uploadTitle">{{ uploadLoading ? 'Uploading…' : 'Publish' }}</button>
+                <button mat-button type="button" (click)="resetUploadForm()" [disabled]="uploadLoading">Reset</button>
+              </div>
+              <mat-error *ngIf="uploadError">{{ uploadError }}</mat-error>
+            </form>
+            <div class="preview" *ngIf="previewUrl">
+              <img [src]="previewUrl" alt="preview" />
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </section>
+      <section class="kc-grid">
+        <p class="muted" *ngIf="activeFilter !== 'All'" style="margin:4px 0 8px; text-align:center;">Filter "{{ activeFilter }}" is active — newly published items might be hidden if they don't match.</p>
+        <p *ngIf="loading">Loading...</p>
+        <p *ngIf="!loading && items.length === 0" class="error">No knowledge items available right now.</p>
+        <div class="thumb-grid">
+          <mat-card class="thumb-card" *ngFor="let item of filteredItems" (click)="openItem(item)" tabindex="0" (keyup.enter)="openItem(item)">
+            <div class="thumb-image"
+                 [style.backgroundImage]="'url(' + ((item.type?.startsWith('image/') && item.url) ? item.url : (item.image || 'assets/ecolife-bg.jpg')) + ')'">
+              <div class="play-overlay">▶</div>
+            </div>
+            <div class="thumb-meta">
+              <h3>{{ item.title }}</h3>
+              <p class="muted">{{ item.description }}</p>
+              <p class="muted" *ngIf="item.displayName || item.user_id">by {{ item.displayName || (item.user_id | slice:0:8) }}</p>
+            </div>
+          </mat-card>
+        </div>
+      </section>
+    </section>
   </div>
-</section>
-
-<section class="highlight">
-  <h2>Featured Resource Highlight</h2>
-  <div class="highlight-box">
-    <h3>The Urgent Need for Global Climate Action</h3>
-    <p>Climate change is our greatest challenge. Explore why action is critical now.</p>
-  </div>
-</section>
+</main>

@@ -9,13 +9,13 @@
     <h2>Logout Error</h2>
     <p>{{ errorMessage }}</p>
     <button (click)="retryLogout()" class="retry-btn">Try Again</button>
-    <p>Or <a routerLink="/login">go to login page</a></p>
+    <p>Or <a routerLink="/">go to the landing page</a></p>
   </div>
 
   <div *ngIf="!isLoggingOut && !errorMessage" class="logout-complete">
     <h2>Logged Out Successfully</h2>
     <p>You have been securely logged out.</p>
-    <p>Redirecting to login page...</p>
-    <p>If you are not redirected, <a routerLink="/login">click here</a>.</p>
+    <p>Redirecting to the landing page…</p>
+    <p>If you are not redirected, <a routerLink="/">click here</a>.</p>
   </div>
 </div>

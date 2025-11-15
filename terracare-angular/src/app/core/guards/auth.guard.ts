@@ -12,23 +12,23 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(): Promise<boolean> {
+    // During SSR there is no browser session; allow navigation and let the client enforce auth after hydration.
+    const isBrowser = typeof window !== 'undefined';
+    if (!isBrowser) return true;
+
     try {
+      // First, check if we have a session. This avoids Supabase's AuthSessionMissingError.
+      const { data: { session }, error: sessionError } = await this.supabase.client.auth.getSession();
+      if (sessionError) {
+        // Treat as unauthenticated rather than throwing; this commonly happens when no session exists
+        console.warn('Auth guard getSession error:', sessionError?.message || sessionError);
+      }
+
+      if (!session) { this.router.navigateByUrl('/'); return false; }
+
       const { data: { user }, error } = await this.supabase.client.auth.getUser();
-      if (error) {
-        console.warn('Auth guard error:', error);
-        this.router.navigate(['/login']);
-        return false;
-      }
-      if (user) {
-        return true;
-      } else {
-        this.router.navigate(['/login']);
-        return false;
-      }
-    } catch (error) {
-      console.error('Auth guard exception:', error);
-      this.router.navigate(['/login']);
-      return false;
-    }
+      if (error) { console.warn('Auth guard getUser error:', error?.message || error); this.router.navigateByUrl('/'); return false; }
+      return !!user;
+    } catch (error: any) { console.warn('Auth guard exception:', error?.message || error); this.router.navigateByUrl('/'); return false; }
   }
 }

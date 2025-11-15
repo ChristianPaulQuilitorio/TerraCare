@@ -1,0 +1,33 @@
+﻿HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1
+Referrer-Policy: no-referrer
+Strict-Transport-Security: max-age=15552000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off
+X-Download-Options: noopen
+X-Frame-Options: SAMEORIGIN
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+RateLimit-Policy: 300;w=900
+RateLimit-Limit: 300
+RateLimit-Remaining: 298
+RateLimit-Reset: 857
+Vary: Origin
+Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 8
+Date: Sat, 15 Nov 2025 09:26:01 GMT
+X-RateLimit-Reset: 1763198779
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+Transfer-Encoding: chunked
+
+data: 236-ade0-90a8bc2fdd6e" "choices": "index":0 " ":1763198762 . How can I assist you today?
+
+event: done
+data: {}
+

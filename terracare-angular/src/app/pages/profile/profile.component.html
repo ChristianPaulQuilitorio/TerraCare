@@ -7,147 +7,196 @@
 
   <!-- Profile Content -->
   <div *ngIf="!loading && user" class="profile-content">
-    <!-- Header Section -->
-    <div class="profile-header">
-      <div class="avatar">
-        <span class="avatar-text">{{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}</span>
-      </div>
-      <div class="header-info">
-        <h1>{{ user.fullName || 'User Profile' }}</h1>
-        <p class="user-email">{{ user.email }}</p>
-        <p class="member-since">Member since {{ formatDate(user.createdAt) }}</p>
-      </div>
-      <div class="header-actions">
-        <button 
-          *ngIf="!editing" 
-          class="btn primary" 
-          (click)="startEditing()"
-        >
-          Edit Profile
-        </button>
+    <!-- Simple cropper dialog -->
+    <div *ngIf="cropDialogOpen" class="modal-backdrop">
+      <div class="modal">
+        <h3>Crop your photo</h3>
+        <div class="cropper" style="width: 320px; height: 320px; margin: 12px auto; position: relative; overflow: hidden; border-radius: 8px; background: #000;">
+          <img *ngIf="cropSrc" [src]="cropSrc" alt="crop" style="position:absolute; top:50%; left:50%; transform: translate(-50%,-50%); max-width:none; width:auto; height:100%;"/>
+        </div>
+        <div *ngIf="cropError" class="message error" style="margin-top:8px;">{{ cropError }}</div>
+        <div class="form-actions" style="margin-top:12px; display:flex; gap:8px; justify-content:flex-end;">
+          <button mat-stroked-button color="primary" (click)="cancelCrop()" [disabled]="cropping">Cancel</button>
+          <button mat-raised-button color="primary" (click)="confirmCrop()" [disabled]="cropping">{{ cropping ? 'Processing...' : 'Save' }}</button>
+        </div>
       </div>
     </div>
 
-    <!-- Success/Error Messages -->
+    <!-- Header Card (stacked, centered for clean alignment) -->
+    <mat-card class="profile-header">
+      <div class="header-stack">
+        <div class="avatar">
+          <img *ngIf="avatarUrl; else noAvatar" [src]="avatarUrl" alt="avatar" style="width: 88px; height: 88px; border-radius: 50%; object-fit: cover;"/>
+          <ng-template #noAvatar>
+            <span class="avatar-text">{{ user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U' }}</span>
+          </ng-template>
+        </div>
+        <div class="header-info">
+          <h1>{{ user.fullName || 'User Profile' }}</h1>
+          <p class="user-email">{{ user.email }}</p>
+          <p class="member-since">Member since {{ formatDate(user.createdAt) }}</p>
+        </div>
+        <div class="header-actions">
+          <button *ngIf="!editing" mat-raised-button color="primary" class="edit-btn" (click)="startEditing()">
+            <mat-icon>edit</mat-icon>
+            Edit Profile
+          </button>
+          <button mat-raised-button class="change-photo-btn" (click)="fileInput.click()" [disabled]="avatarUploading">
+            <mat-icon>photo_camera</mat-icon>
+            <span>{{ avatarUploading ? 'Uploading...' : 'Change Photo' }}</span>
+          </button>
+          <input #fileInput type="file" accept="image/*" (change)="onAvatarFileSelected($event)" style="display:none;" [disabled]="avatarUploading" />
+          <button mat-stroked-button color="warn" class="remove-btn" (click)="removeAvatar()" [disabled]="avatarUploading || !avatarUrl">
+            <mat-icon>delete</mat-icon>
+            Remove Photo
+          </button>
+        </div>
+      </div>
+      <mat-progress-bar *ngIf="avatarUploading" mode="indeterminate"></mat-progress-bar>
+    </mat-card>
+
     <div *ngIf="message" class="message" [class.success]="!message.includes('Failed')" [class.error]="message.includes('Failed')">
       {{ message }}
     </div>
 
-    <!-- Profile Information -->
-    <div class="profile-sections">
-      <!-- Basic Information -->
-      <div class="section">
-        <h2>Basic Information</h2>
-        
-        <!-- View Mode -->
-        <div *ngIf="!editing" class="info-view">
-          <div class="info-item">
-            <label>Full Name</label>
-            <span>{{ user.fullName || 'Not provided' }}</span>
-          </div>
-          <div class="info-item">
-            <label>Email Address</label>
-            <span>{{ user.email }}</span>
-          </div>
-          <div class="info-item">
-            <label>User ID</label>
-            <span class="user-id">{{ user.id }}</span>
-          </div>
+    <!-- Tabs -->
+    <mat-tab-group>
+      <mat-tab label="Profile">
+        <div class="profile-sections">
+          <mat-card class="section">
+            <h2>Basic Information</h2>
+            <!-- View Mode -->
+            <div *ngIf="!editing" class="info-view">
+              <div class="info-item">
+                <label>Full Name</label>
+                <span>{{ user.fullName || 'Not provided' }}</span>
+              </div>
+              <div class="info-item">
+                <label>Email Address</label>
+                <span>{{ user.email }}</span>
+              </div>
+              <div class="info-item">
+                <label>User ID</label>
+                <span class="user-id">{{ user.id }}</span>
+              </div>
+            </div>
+
+            <!-- Edit Mode -->
+            <form *ngIf="editing" [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="edit-form">
+              <mat-form-field appearance="outline" style="width:100%; margin-bottom: 16px;">
+                <mat-label>Full Name</mat-label>
+                <input matInput type="text" formControlName="fullName" placeholder="Enter your full name">
+                <mat-error *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched">
+                  Full name is required (minimum 2 characters)
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" style="width:100%;">
+                <mat-label>Email Address</mat-label>
+                <input matInput type="email" formControlName="email" placeholder="Email" [disabled]="true">
+                <mat-hint>To change your email, use account settings or contact support.</mat-hint>
+              </mat-form-field>
+
+              <div class="form-actions">
+                <button type="button" mat-stroked-button color="primary" (click)="cancelEditing()" [disabled]="saving">Cancel</button>
+                <button type="submit" mat-raised-button color="primary" [disabled]="profileForm.invalid || saving">
+                  {{ saving ? 'Saving...' : 'Save Changes' }}
+                </button>
+              </div>
+            </form>
+          </mat-card>
         </div>
+      </mat-tab>
 
-        <!-- Edit Mode -->
-        <form *ngIf="editing" [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="edit-form">
-          <div class="form-group">
-            <label for="fullName">Full Name</label>
-            <input 
-              type="text" 
-              id="fullName" 
-              formControlName="fullName"
-              placeholder="Enter your full name"
-            >
-            <small *ngIf="profileForm.get('fullName')?.invalid && profileForm.get('fullName')?.touched" class="error">
-              Full name is required (minimum 2 characters)
-            </small>
-          </div>
+      
 
-          <div class="form-group">
-            <label for="email">Email Address</label>
-            <input 
-              type="email" 
-              id="email" 
-              formControlName="email"
-              placeholder="Enter your email"
-            >
-            <small *ngIf="profileForm.get('email')?.invalid && profileForm.get('email')?.touched" class="error">
-              Please enter a valid email address
-            </small>
-          </div>
-
-          <div class="form-actions">
-            <button 
-              type="button" 
-              class="btn secondary" 
-              (click)="cancelEditing()"
-              [disabled]="saving"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit" 
-              class="btn primary" 
-              [disabled]="profileForm.invalid || saving"
-            >
-              {{ saving ? 'Saving...' : 'Save Changes' }}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Account Actions -->
-      <div class="section">
-        <h2>Account Actions</h2>
-        <div class="action-buttons">
-          <button class="btn secondary" routerLink="/home">
-            🏠 Back to Dashboard
-          </button>
-          <button class="btn secondary" routerLink="/dashboard">
-            📊 View My Stats
-          </button>
-          <button class="btn danger" (click)="logout()">
-            🚪 Sign Out
-          </button>
+      <mat-tab label="Accessibility">
+        <div class="profile-sections">
+          <mat-card class="section">
+            <h2>Accessibility</h2>
+            <p>Adjust the interface to your needs. These settings are saved on this device.</p>
+            <div class="a11y-options">
+              <button mat-stroked-button color="primary" (click)="toggleHighContrast()">
+                <mat-icon>{{ highContrast ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                High contrast
+              </button>
+              <button mat-stroked-button color="primary" (click)="toggleLargeFont()">
+                <mat-icon>{{ largeFont ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                Larger text
+              </button>
+              <button mat-stroked-button color="primary" (click)="toggleReduceMotion()">
+                <mat-icon>{{ reduceMotion ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                Reduce motion
+              </button>
+            </div>
+          </mat-card>
         </div>
-      </div>
+      </mat-tab>
 
-      <!-- App Statistics (Demo Data) -->
-      <div class="section">
-        <h2>Your TerraCare Impact</h2>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-number">5</div>
-            <div class="stat-label">Challenges Completed</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">1.2kg</div>
-            <div class="stat-label">CO₂ Saved</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">12</div>
-            <div class="stat-label">Articles Read</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-number">3</div>
-            <div class="stat-label">Forum Posts</div>
-          </div>
+      <mat-tab label="Activity">
+        <div class="profile-sections">
+          <mat-card class="section">
+            <h2>Your TerraCare Impact</h2>
+            <div *ngIf="activityLoading" style="padding:1rem;">Loading activity...</div>
+            <div *ngIf="!activityLoading" class="stats-grid">
+              <mat-card class="stat-card">
+                <div class="stat-number">{{ challengesCompleted }}</div>
+                <div class="stat-label">Challenges Completed</div>
+              </mat-card>
+              <mat-card class="stat-card">
+                <div class="stat-number">{{ knowledgeCount }}</div>
+                <div class="stat-label">Knowledge Items Published</div>
+              </mat-card>
+              <mat-card class="stat-card">
+                <div class="stat-number">{{ postsCount }}</div>
+                <div class="stat-label">Forum Posts</div>
+              </mat-card>
+              <mat-card class="stat-card">
+                <div class="stat-number">{{ commentsCount }}</div>
+                <div class="stat-label">Comments</div>
+              </mat-card>
+            </div>
+          </mat-card>
         </div>
-      </div>
-    </div>
+      </mat-tab>
+    </mat-tab-group>
+
+    <!-- Quick Actions Card -->
+    <mat-card class="section">
+      <h2>Quick Actions</h2>
+      <mat-grid-list [cols]="isHandset ? 2 : 4" [rowHeight]="quickRowHeight" gutterSize="12px" class="quick-grid">
+        <mat-grid-tile>
+          <a mat-raised-button color="primary" routerLink="/home" class="action-btn">
+            <mat-icon>home</mat-icon>
+            <span>Dashboard</span>
+          </a>
+        </mat-grid-tile>
+        <mat-grid-tile>
+          <a mat-raised-button color="primary" routerLink="/dashboard" class="action-btn">
+            <mat-icon>bar_chart</mat-icon>
+            <span>My Stats</span>
+          </a>
+        </mat-grid-tile>
+        <mat-grid-tile>
+          <a mat-raised-button color="primary" routerLink="/challenges/archive" class="action-btn">
+            <mat-icon>archive</mat-icon>
+            <span>Archive</span>
+          </a>
+        </mat-grid-tile>
+        <mat-grid-tile>
+          <button mat-raised-button color="warn" (click)="logout()" class="action-btn">
+            <mat-icon>logout</mat-icon>
+            <span>Sign Out</span>
+          </button>
+        </mat-grid-tile>
+      </mat-grid-list>
+    </mat-card>
   </div>
 
   <!-- Not Logged In State -->
   <div *ngIf="!loading && !user" class="not-logged-in">
     <h2>Please Log In</h2>
     <p>You need to be logged in to view your profile.</p>
-    <button class="btn primary" routerLink="/login">Go to Login</button>
+    <a mat-raised-button color="primary" routerLink="/login">Go to Login</a>
   </div>
 </div>

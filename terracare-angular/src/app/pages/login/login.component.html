@@ -1,33 +1,45 @@
-<div class="login-container">
-  <img src="assets/icons/Gemini_Generated_Image_mfx6llmfx6llmfx6.png" alt="TerraCare logo" style="width:60px; height:60px; border-radius:8px; object-fit:cover;">
-  <h2>TerraCare</h2>
+<mat-card appearance="outlined">
+  <div class="auth-header" mat-dialog-title>
+  <img class="app-logo" src="assets/TerraCareLogo.png" alt="TerraCare logo" />
+    <h2 class="brand-name">TerraCare</h2>
+  </div>
+  <div mat-dialog-content>
+    <p class="subtitle">Welcome back — let’s continue your journey.</p>
 
-  <form [formGroup]="form" (ngSubmit)="submit()">
-    <label for="email">Email Address</label>
-    <input type="email" id="email" formControlName="email" placeholder="name@example.com" required>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Email Address</mat-label>
+        <mat-icon matPrefix>mail</mat-icon>
+        <input matInput type="email" formControlName="email" placeholder="name@example.com" autocomplete="email" required>
+        <mat-error *ngIf="form.get('email')?.touched && form.get('email')?.invalid">
+          Please enter a valid email address
+        </mat-error>
+      </mat-form-field>
 
-    <label for="password">Password</label>
-    <input type="password" id="password" formControlName="password" placeholder="********" required>
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Password</mat-label>
+        <mat-icon matPrefix>lock</mat-icon>
+        <input matInput [type]="hidePassword ? 'password' : 'text'" formControlName="password" placeholder="••••••••" autocomplete="current-password" required>
+        <button type="button" mat-icon-button matSuffix (click)="hidePassword = !hidePassword" [attr.aria-label]="hidePassword ? 'Show password' : 'Hide password'" [attr.aria-pressed]="!hidePassword">
+          <mat-icon>{{ hidePassword ? 'visibility' : 'visibility_off' }}</mat-icon>
+        </button>
+        <mat-error *ngIf="form.get('password')?.touched && form.get('password')?.invalid">
+          Password is required (min 6 characters)
+        </mat-error>
+      </mat-form-field>
 
-    <div class="options">
-      <label><input type="checkbox" formControlName="remember"> Remember me</label>
-      <a routerLink="/forgot-password">Forgot Password?</a>
-    </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin:8px 0 16px;">
+        <mat-checkbox formControlName="remember">Remember me</mat-checkbox>
+        <a class="muted-link" href="#" (click)="openForgot($event)">Forgot Password?</a>
+      </div>
 
-    <button type="submit" class="login-btn" id="loginBtn" [disabled]="!canSubmit || submitting">{{ submitting ? 'Signing in…' : 'Login' }}</button>
-
-    <p class="signup-text">
-      Don’t have an account? <a routerLink="/signup">Create an Account</a>
-    </p>
-  </form>
-</div>
-
-<!-- Toast notifications (upper center) -->
-<div class="toast toast--error" *ngIf="showError">
-  {{ errorText }}
-  <button class="toast__close" aria-label="Close" (click)="closeError()">×</button>
- </div>
-<div class="toast toast--success" *ngIf="showSuccess">
-  Login successful. Redirecting…
-  <button class="toast__close" aria-label="Close" (click)="closeSuccess()">×</button>
-</div>
+      <button mat-raised-button color="primary" id="loginBtn" type="submit" [disabled]="!canSubmit || submitting">
+        {{ submitting ? 'Signing in…' : 'Login' }}
+      </button>
+      <div class="footer-links">
+        <span>Don’t have an account?</span>
+        <a href="#" (click)="$event.preventDefault(); openSignup()" class="tc-link">Create an Account</a>
+      </div>
+    </form>
+  </div>
+</mat-card>

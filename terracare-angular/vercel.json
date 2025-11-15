@@ -1,10 +1,20 @@
 {
-  "version": 2,
-  "framework": "angular",
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist/terracare-angular/browser",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" },
-    { "source": "/(.*)", "destination": "/index.html" }
+  "version": 3,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist/terracare-angular",
+        "buildCommand": "npm run vercel-build"
+      }
+    }
+  ],
+  "routes": [
+    
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
+    }
   ]
 }

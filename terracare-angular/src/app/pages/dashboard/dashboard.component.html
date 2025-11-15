@@ -1,34 +1,116 @@
-<app-navbar />
-
-<div class="dashboard-container">
-  <aside class="sidebar">
-    <ul>
-      <li class="active">Overview</li>
-      <li>Eco-Challenges</li>
-      <li>Knowledge Hub</li>
-      <li>Forum</li>
-      <li>Settings</li>
-    </ul>
-  </aside>
-
+<div class="dashboard-container mat-app-background">
   <main class="dashboard-content">
-    <h1>Dashboard Overview</h1>
-    <div class="cards">
-      <div class="card highlight">
-        <h3>Active Challenges</h3>
-        <p class="number">5</p>
-        <p>Challenges you’ve joined and are actively working on.</p>
+    <header class="dashboard-header">
+      <div>
+        <h1>Dashboard Overview</h1>
+        <p class="subtitle">Quick snapshot of your activity and resources</p>
       </div>
-      <div class="card">
-        <h3>Available Resources</h3>
-        <p class="number orange">120</p>
-        <p>Articles, guides, and videos in the Knowledge Hub.</p>
+      <div class="header-actions">
+        <button mat-raised-button color="primary" routerLink="/challenges">Create Challenge</button>
       </div>
-      <div class="card">
-        <h3>Recent Forum Activity</h3>
-        <p class="number">15</p>
-        <p>New posts or replies in the community forum.</p>
-      </div>
-    </div>
+    </header>
+
+    <section class="stats-grid">
+      <mat-card class="highlight">
+        <mat-card-header>
+          <mat-card-title>Active Challenges</mat-card-title>
+          <mat-card-subtitle>{{ activeCount }} Joined</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="muted">Challenges you’ve joined and are actively working on.</p>
+          <div *ngIf="featuredActive as ac" class="active-preview">
+            <h4 class="challenge-title">{{ ac.title || ac.name || ac.id }}</h4>
+            <p class="muted small">Joined {{ ac.joined_at | date:'shortDate' }} • {{ getChallengePercent(ac) }}% complete</p>
+            <mat-progress-bar mode="determinate" color="primary" [value]="getChallengePercent(ac)"></mat-progress-bar>
+            <div class="action-row" style="margin-top:8px;">
+              <button mat-stroked-button color="primary" [routerLink]="['/challenges/progress']" [queryParams]="{ id: ac.id }">Detailed Progress</button>
+            </div>
+            <div *ngIf="activeChallenges.length > 1" class="muted small" style="margin-top:6px;">Tracking {{ activeChallenges.length }} active challenges (showing most recent).</div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Available Resources</mat-card-title>
+          <mat-card-subtitle>{{ knowledgeCount }} Items</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="muted">Articles, guides, and videos in the Knowledge Hub.</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Recent Forum Activity</mat-card-title>
+          <mat-card-subtitle>{{ forumCount }} Posts</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="muted">New posts or replies in the community forum.</p>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stretch">
+        <mat-card-header>
+          <mat-card-title>Engagement — Leaderboard</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ol class="leaderboard-grid">
+            <li *ngFor="let lb of (leaderboard | slice:0:3); index as i">
+              <div class="rank">#{{ i + 1 }}</div>
+              <div class="info">
+                <div class="name">{{ lb.name }}</div>
+                <div class="meta muted">{{ lb.user_id }}</div>
+              </div>
+              <div class="score">{{ lb.score }}</div>
+            </li>
+          </ol>
+          <p class="muted">Top 3 users by challenges completed (from recent activity).</p>
+          <div *ngIf="leaderboard.length > 3" class="see-more-wrapper" style="margin-top:8px;">
+            <button mat-stroked-button color="primary" routerLink="/leaderboard">See more</button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <section class="lower-row">
+      <mat-card class="recent-activity">
+        <mat-card-header>
+          <mat-card-title>Recent Activity (last 24h)</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ul class="activity-list">
+            <li *ngFor="let a of recentActivity">
+              <strong>{{ a.user }}</strong>
+              <span class="muted"> • </span>
+              <em>{{ a.title }}</em>
+              <span class="time">{{ a.time | date:'short' }}</span>
+            </li>
+            <li *ngIf="!recentActivity || recentActivity.length === 0" class="muted">No activity in the last 24 hours.</li>
+          </ul>
+        </mat-card-content>
+      </mat-card>
+      <mat-card class="quick-actions">
+        <mat-card-header>
+          <mat-card-title>Quick Actions</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="actions-grid">
+            <button mat-mini-fab color="primary" aria-label="Join challenge" (click)="quickJoinChallenge()"><mat-icon>group_add</mat-icon></button>
+            <button mat-mini-fab color="accent" aria-label="Create post" (click)="quickCreatePost()"><mat-icon>chat</mat-icon></button>
+            <button mat-mini-fab color="primary" aria-label="Add resource" (click)="quickAddResource()"><mat-icon>library_add</mat-icon></button>
+          </div>
+          <div class="leaderboard" style="margin-top:18px;">
+            <h4>Leaderboard</h4>
+            <ol class="leader-list">
+              <li *ngFor="let lb of leaderboard">
+                <span class="leader-name">{{ lb.name }}</span>
+                <span class="leader-score">{{ lb.score }}</span>
+              </li>
+            </ol>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
   </main>
 </div>
