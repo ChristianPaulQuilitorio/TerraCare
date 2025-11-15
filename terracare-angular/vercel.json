@@ -5,7 +5,7 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist/terracare-angular/browser",
+        "distDir": "dist/terracare-angular",
         "buildCommand": "npm run build"
       }
     }
