@@ -5,7 +5,7 @@
   "description": "Repository root wrapper to forward Vercel builds to the terracare-angular subfolder.",
   "scripts": {
     "vercel-build": "cd terracare-angular && npm ci && npm run vercel-build",
-    "build": "cd terracare-angular && npm run build"
+    "build": "cd terracare-angular && npm ci && npm run build:ci"
   },
   "engines": {
     "node": ">=18"

@@ -21,7 +21,7 @@
     "build:ssr": "cross-env NODE_NO_WARNINGS=1 ng run terracare-angular:build:production",
   "build": "cross-env NODE_NO_WARNINGS=1 ng build --configuration production",
   "build:dev": "cross-env NODE_NO_WARNINGS=1 ng build --configuration development",
-    "build:ci": "NODE_NO_WARNINGS=1 ng build --configuration production",
+    "build:ci": "cross-env NODE_NO_WARNINGS=1 ng build --configuration production",
     "vercel-build": "npm run build:ci",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
