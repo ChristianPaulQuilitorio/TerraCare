@@ -1,48 +1,89 @@
-.navbar { display: flex; align-items: center; background: #fff; padding: 12px 30px; border-bottom: 1px solid #eee; }
-.navbar-logo a { display: inline-flex; align-items: center; gap: 0px; text-decoration: none; }
-.navbar-logo .logo-img { width: 50px; height: 50px; object-fit: contain; border-radius: 6px; }
-.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0; }
-.navbar-links { display: flex; gap: 24px; margin: 0 auto; padding: 0; list-style: none; }
-.navbar-links li a { color: #333; text-decoration: none; font-weight: 500; padding: 6px 12px; border-radius: 4px; }
-.navbar-links li a.active, .navbar-links li a:hover { background: #4CAF50; color: white; }
-.navbar-actions { display: flex; gap: 16px; list-style: none; margin: 0; padding: 0; }
-.navbar-actions li a { display: flex; align-items: center; justify-content: center; padding: 6px 12px; border-radius: 4px; text-decoration: none; }
-.navbar-actions li a:hover { background: #4CAF50; }
-.icon-search, .icon-logout { width: 20px; height: 20px; background-size: contain; background-repeat: no-repeat; background-position: center; }
-.icon-search { background: url('data:image/svg+xml;utf8,<svg fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') center/contain no-repeat; }
-.icon-logout { background: url('data:image/svg+xml;utf8,<svg fill="none" stroke="black" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 16l-4-4m0 0l4-4m-4 4h12"/><path d="M17 16v1a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>') center/contain no-repeat; }
-
-/* Mobile hamburger toggle */
-.nav-toggle { display: none; }
-.nav-hamburger {
-	display: none;
-	width: 42px;
-	height: 36px;
-	cursor: pointer;
-	margin-left: 12px;
-	align-items: center;
-	justify-content: center;
+/* Material toolbar-based navbar with TerraCare white/green design */
+.navbar-shell { display:block; }
+.navbar {
+  padding: 0 16px;
+  background: #ffffff;
+  color: #2c3e50;
+  border-bottom: 1px solid #eef2ee;
+  position: relative;
+  z-index: 10;
 }
-.nav-hamburger span { display: block; height: 3px; width: 22px; background: #2e7d32; margin: 4px 0; border-radius: 2px; transition: transform 0.2s ease; }
+.menu-button { margin-right: 8px; display:inline-flex; align-items:center; justify-content:center; }
+.navbar-logo { display: inline-flex; align-items: center; text-decoration: none; }
+.navbar-logo .logo-img { width: 40px; height: 40px; object-fit: contain; border-radius: 6px; }
+.spacer { flex: 1 1 auto; }
 
-/* container that wraps links and actions (for mobile slide-down) */
-.navbar-menu { display: flex; align-items: center; gap: 12px; width: 100%; }
+.navbar-links { display: flex; gap: 4px; margin: 0 16px; padding: 0; list-style: none; }
+.navbar-links li { display: flex; }
+.navbar-links li a[mat-button] {
+  color: #2c3e50;
+  border-radius: 8px;
+}
+.navbar-links li a[mat-button]:hover,
+.navbar-links li a.active {
+  background: #E8F5E9; /* light green */
+  color: #2E7D32;      /* TerraCare green */
+}
+
+.navbar-actions { display: flex; align-items: center; gap: 8px; }
+
+/* TerraCare button styles used in navbar */
+.tc-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  line-height: 1;
+}
+.tc-btn.tc-primary { background: #2E7D32; color: #fff; }
+.tc-btn.tc-primary:hover { background: #256628; color: #fff; }
+.tc-btn.tc-outline { border: 2px solid #2E7D32; color: #2E7D32; background: transparent; }
+.tc-btn.tc-outline:hover { background: #E8F5E9; }
 
 @media (max-width: 840px) {
-	.navbar { padding: 12px 16px; }
-	.navbar-links { display: none; position: absolute; left: 0; right: 0; top: 64px; background: #fff; flex-direction: column; gap: 0; padding: 10px 12px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
-	.navbar-links li { margin: 6px 0; }
-	.navbar-links li a { display: block; padding: 10px 12px; }
-	.navbar-actions { display: none; }
-	.nav-hamburger { display: flex; }
+  .navbar-links { display: none; }
+  .mobile-drawer { width: 260px; }
+  .navbar { padding-left: 4px; }
+  .menu-button { margin-left: 4px; }
+  .navbar-actions { display: none; }
+}
 
-	/* When toggle checked, show menu */
-	.nav-toggle:checked + .nav-hamburger + .navbar-menu .navbar-links,
-	.nav-toggle:checked + .nav-hamburger + .navbar-menu .navbar-actions { display: flex; }
+/* Ensure burger stays above content */
+.navbar { z-index: 4000; position: relative; }
 
-	/* Place actions inside menu for mobile when opened */
-	.nav-toggle:checked + .nav-hamburger + .navbar-menu { flex-direction: column; align-items: stretch; }
+/* Ensure mobile sidenav and its backdrop/scrim always overlay page content */
+.navbar-shell { position: relative; }
+.navbar-shell .mat-drawer-backdrop,
+.navbar-shell .mat-mdc-sidenav-scrim {
+  /* Make the scrim cover the whole viewport, not just the toolbar height */
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646 !important; /* sit above everything except the drawer */
+  background: rgba(0, 0, 0, 0.5); /* darker, consistent overlay */
+}
+.navbar-shell .mat-drawer,
+.navbar-shell .mat-mdc-sidenav {
+  /* Make the drawer float over the entire app */
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 2147483647 !important; /* max practical value */
+}
 
-	/* Small logo image on mobile */
-	.navbar-logo .logo-img { width: 44px; height: 44px; }
+/* Extra safeguard: when drawer is open, elevate container and apply isolation to prevent underlying stacking contexts from bleeding through */
+.navbar-shell.drawer-open {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483645; /* below drawer & scrim but above all page content */
+  pointer-events: none; /* allow interactions only with drawer/scrim */
+}
+.navbar-shell.drawer-open .mat-drawer,
+.navbar-shell.drawer-open .mat-mdc-sidenav,
+.navbar-shell.drawer-open .mat-drawer-backdrop,
+.navbar-shell.drawer-open .mat-mdc-sidenav-scrim {
+  pointer-events: auto;
 }

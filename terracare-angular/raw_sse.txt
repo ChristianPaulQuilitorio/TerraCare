@@ -1,0 +1,33 @@
+HTTP/1.1 200 OK
+Cross-Origin-Opener-Policy: same-origin
+Cross-Origin-Resource-Policy: same-origin
+Origin-Agent-Cluster: ?1       
+Referrer-Policy: no-referrer   
+Strict-Transport-Security: max-age=15552000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-DNS-Prefetch-Control: off    
+X-Download-Options: noopen     
+X-Frame-Options: SAMEORIGIN    
+X-Permitted-Cross-Domain-Policies: none
+X-XSS-Protection: 0
+RateLimit-Policy: 300;w=900    
+RateLimit-Limit: 300
+RateLimit-Remaining: 299
+RateLimit-Reset: 900
+Vary: Origin
+Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, X-Admin-Token
+Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 9       
+Date: Sat, 15 Nov 2025 09:13:13 GMT
+X-RateLimit-Reset: 1763198054  
+Content-Type: text/event-stream
+Cache-Control: no-cache        
+Connection: keep-alive
+Transfer-Encoding: chunked     
+
+
+data: Wrong API Keyinvalid_request_errorapi_keywrong_api_key  
+
+event: done
+data: {}

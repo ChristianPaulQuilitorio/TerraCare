@@ -1,18 +1,27 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, Optional, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { MatDialog } from '@angular/material/dialog';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { PrivacyDialogComponent } from '../legal/privacy-dialog.component';
+import { TermsDialogComponent } from '../legal/terms-dialog.component';
+import { MATERIAL_IMPORTS } from '../../shared/ui/material.imports';
+import { AuthDialogService } from '../../shared/ui/auth-dialog.service';
+import { MatDialogRef } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, ...MATERIAL_IMPORTS],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
 export class SignupComponent {
+  hidePassword = true;
+  hideConfirm = true;
   form = this.fb.group({
     fullname: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
     email: ['', [Validators.required, Validators.email]],
@@ -32,7 +41,11 @@ export class SignupComponent {
   constructor(
     private fb: FormBuilder, 
     private auth: AuthService,
-    private router: Router
+    private router: Router,
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar,
+    private authDialog: AuthDialogService,
+    @Optional() private dialogRef?: MatDialogRef<SignupComponent>
   ) {}
 
   passwordsMatch(group: AbstractControl): ValidationErrors | null {
@@ -59,7 +72,7 @@ export class SignupComponent {
     const agreedPrivacy = !!this.form.get('privacy')?.value;
     const agreedTerms = !!this.form.get('terms')?.value;
     if (!agreedPrivacy || !agreedTerms) {
-      this.showAgreeModal = true;
+      this.snackBar.open('Please agree to the Privacy Policy and Terms to create an account.', 'Dismiss', { duration: 3000 });
       return;
     }
 
@@ -99,8 +112,14 @@ export class SignupComponent {
       try {
         const user = await this.auth.getCurrentUser();
         if (user && user.email === this.verificationEmail) {
-          // Verified — redirect to login so the user can sign in
-          this.router.navigateByUrl('/login');
+            // Verified — switch to login dialog so the user can sign in
+            if (this.dialogRef) {
+              this.dialogRef.close();
+              setTimeout(() => this.authDialog.openLogin(), 0);
+            } else {
+              // No route — open login dialog
+              this.authDialog.openLogin();
+            }
         } else {
           this.message = 'Email not verified yet. Please check your inbox or click resend.';
         }
@@ -110,12 +129,21 @@ export class SignupComponent {
         this.verificationCheckBusy = false;
       }
   }
-  // Modal state and handlers
-  showPrivacy = false;
-  showTerms = false;
-  openPrivacy() { this.showPrivacy = true; }
-  closePrivacy() { this.showPrivacy = false; }
-  openTerms() { this.showTerms = true; }
-  closeTerms() { this.showTerms = false; }
+  // Dialog handlers
+  openPrivacy() {
+    this.dialog.open(PrivacyDialogComponent, { width: '640px', maxHeight: '80vh' });
+  }
+  openTerms() {
+    this.dialog.open(TermsDialogComponent, { width: '640px', maxHeight: '80vh' });
+  }
+
+  openLogin() {
+    if (this.dialogRef) {
+      this.dialogRef.close();
+      setTimeout(() => this.authDialog.openLogin(), 0);
+    } else {
+      this.authDialog.openLogin();
+    }
+  }
 }
 // TODO: Replace with real signup service and route to dashboard after signup.

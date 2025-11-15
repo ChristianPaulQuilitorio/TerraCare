@@ -1,40 +1,77 @@
-<app-navbar />
-
 <section class="forum">
   <h1>Community Forum</h1>
 
-  <!-- Create post box (Facebook-like) -->
-  <div class="create-post">
-    <div class="cp-top">
-      <div class="avatar">
-        <span class="avatar-text">{{ userName ? (userName.charAt(0) | uppercase) : 'U' }}</span>
+  <!-- Create post box -->
+  <mat-card class="create-post">
+    <mat-card-content>
+      <div class="cp-top">
+        <div class="avatar">
+          <span class="avatar-text">{{ userName ? (userName.charAt(0) | uppercase) : 'U' }}</span>
+        </div>
+        <mat-form-field class="draft-field" appearance="fill" style="flex:1;">
+          <mat-label>What's on your mind, {{ userName || 'User' }}?</mat-label>
+          <textarea matInput id="forum-draft" [(ngModel)]="draftText" rows="2" (keydown)="onDraftKeydown($event)" (input)="autoResize($event)"></textarea>
+        </mat-form-field>
       </div>
-      <textarea id="forum-draft" [(ngModel)]="draftText" placeholder="What's on your mind, {{ userName || 'User' }}?" rows="2"
-        (keydown)="onDraftKeydown($event)" (input)="autoResize($event)"></textarea>
-    </div>
-    <div class="cp-actions">
-      <div class="quick-actions" style="display:flex; gap:8px; align-items:center;">
-        <button class="qa" (click)="triggerFileInput('image')"><span class="icon">🖼️</span> Photo/video</button>
-        <button class="qa" (click)="triggerFileInput('video')"><span class="icon">🎞️</span> Reel</button>
-        <input #fileInput type="file" accept="image/*,video/*" style="display:none" (change)="onFileSelected($event)">
+      <div class="cp-actions">
+        <div class="quick-actions">
+          <button mat-button (click)="triggerFileInput('image')"><mat-icon>image</mat-icon> Photo/video</button>
+          <button mat-button (click)="triggerFileInput('video')"><mat-icon>movie</mat-icon> Reel</button>
+          <input #fileInput type="file" accept="image/*,video/*" style="display:none" (change)="onFileSelected($event)">
+        </div>
+        <div class="post-actions">
+          <button mat-raised-button color="primary" (click)="publishPost()" [disabled]="!draftText.trim() || loading">
+            {{ loading ? 'Posting…' : 'Post' }}
+          </button>
+        </div>
       </div>
-      <div class="post-actions" style="text-align:right;">
-        <button class="btn primary" (click)="publishPost()" [disabled]="!draftText.trim()">Post</button>
+      <div class="attachment-preview" *ngIf="attachedPreview">
+        <div class="preview">
+          <img *ngIf="attachedPreviewType==='image'" [src]="attachedPreview" alt="preview">
+          <video *ngIf="attachedPreviewType==='video'" [src]="attachedPreview" controls></video>
+        </div>
+        <button mat-button (click)="clearAttachment()">Remove attachment</button>
       </div>
-    </div>
-    <div class="attachment-preview" *ngIf="attachedPreview">
-      <div class="preview">
-        <img *ngIf="attachedPreviewType==='image'" [src]="attachedPreview" alt="preview">
-        <video *ngIf="attachedPreviewType==='video'" [src]="attachedPreview" controls></video>
-      </div>
-      <button class="btn" (click)="clearAttachment()">Remove attachment</button>
-    </div>
-  </div>
+      <p class="error" *ngIf="errorMsg">{{ errorMsg }}</p>
+    </mat-card-content>
+  </mat-card>
 
   <div class="discussion-list">
-    <div class="discussion" *ngFor="let p of posts">
-      <h3>{{ p.title || (p.author_name + ' · ' + formatTimestamp(p.created_at)) }}</h3>
-      <p>{{ p.content }}</p>
-    </div>
-  </div>
+    <mat-progress-bar *ngIf="loadingPosts" mode="indeterminate" color="primary"></mat-progress-bar>
+    <mat-card class="discussion" *ngFor="let p of posts; trackBy: trackByPostId">
+      <mat-card-header>
+        <mat-card-title>{{ p.title || (p.author_name + ' · ' + formatTimestamp(p.created_at)) }}</mat-card-title>
+        <mat-card-subtitle>
+          <span>by {{ p.author_name || (p.author_id | slice:0:8) }}</span>
+          <span class="muted"> • {{ formatTimestamp(p.created_at) }}</span>
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div *ngIf="!p.editing; else editTpl">
+          <p style="white-space:pre-wrap">{{ p.content }}</p>
+          <ng-container *ngIf="p.attachment_url as url">
+            <img *ngIf="p.attachment_type==='image'" [src]="url" alt="attachment" style="max-width:100%; border-radius:8px; margin-top:8px;" />
+            <video *ngIf="p.attachment_type==='video'" [src]="url" controls style="width:100%; border-radius:8px; margin-top:8px;"></video>
+          </ng-container>
+        </div>
+        <ng-template #editTpl>
+          <mat-form-field appearance="fill" style="width:100%">
+            <mat-label>Edit post</mat-label>
+            <textarea matInput rows="3" [(ngModel)]="p.draft_content"></textarea>
+          </mat-form-field>
+        </ng-template>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-button (click)="toggleHeart(p)" [disabled]="!isLoggedIn" [color]="p.viewer_has_hearted ? 'warn' : undefined">
+          <mat-icon>{{ p.viewer_has_hearted ? 'favorite' : 'favorite_border' }}</mat-icon>
+          {{ p.hearts_count || 0 }}
+        </button>
+        <button mat-button *ngIf="p.can_edit && !p.editing" (click)="startEdit(p)">Edit</button>
+        <button mat-button color="primary" *ngIf="p.can_edit && p.editing" (click)="saveEdit(p)">Save</button>
+        <button mat-button *ngIf="p.can_edit && p.editing" (click)="cancelEdit(p)">Cancel</button>
+        <button mat-button color="warn" *ngIf="p.can_delete" (click)="onDelete(p)">Delete</button>
+        <button mat-button color="primary" (click)="openCommentsModal(p)">Comment here</button>
+      </mat-card-actions>
+    </mat-card>
+        </div>
 </section>

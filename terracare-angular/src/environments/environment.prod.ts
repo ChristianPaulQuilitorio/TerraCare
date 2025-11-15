@@ -8,5 +8,8 @@ export const environment = {
 	production: true,
 	apiBase: '',
 	supabaseUrl: (globalThis as any).SUPABASE_URL || '',
-	supabaseAnonKey: (globalThis as any).SUPABASE_ANON_KEY || ''
+	supabaseAnonKey: (globalThis as any).SUPABASE_ANON_KEY || '',
+	CEREBRAS_API_KEY: (globalThis as any).CEREBRAS_API_KEY || '',
+	CEREBRAS_API_URL: (globalThis as any).CEREBRAS_API_URL || '',
+	CEREBRAS_MODEL: (globalThis as any).CEREBRAS_MODEL || ''
 };

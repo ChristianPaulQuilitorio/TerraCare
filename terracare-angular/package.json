@@ -3,17 +3,21 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "cross-env NODE_NO_WARNINGS=1 ng serve",
+  "start": "cross-env NODE_NO_WARNINGS=1 ng serve --proxy-config proxy.conf.json",
     "start:clean": "ng serve",
     "serve:ssr": "cross-env NODE_NO_WARNINGS=1 ng run terracare-angular:build:development && node dist/terracare-angular/server/server.mjs",
     "build:ssr": "cross-env NODE_NO_WARNINGS=1 ng run terracare-angular:build:production",
-    "build": "cross-env NODE_NO_WARNINGS=1 ng build",
-    "vercel-build": "npm run build:ssr",
+  "build": "cross-env NODE_NO_WARNINGS=1 ng build --configuration production",
+  "build:dev": "cross-env NODE_NO_WARNINGS=1 ng build --configuration development",
+    "vercel-build": "npm run build",
     "now-build": "npm run vercel-build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "eslint . --ext .ts,.html --max-warnings=0",
     "serve:ssr:terracare-angular": "node dist/terracare-angular/server/server.mjs"
+  ,"dev:server": "cross-env NODE_NO_WARNINGS=1 PORT=4000 node -r ts-node/register server.ts"
+    ,"dev": "concurrently \"npm:dev:server\" \"npm:start\""
+    ,"dev:proxy": "cross-env PORT=4000 node -r dotenv/config server-dev-proxy.js"
   },
   "private": true,
   "dependencies": {
@@ -29,12 +33,17 @@
     "@angular/ssr": "^17.3.12",
     "@supabase/supabase-js": "^2.58.0",
     "dotenv": "^16.6.1",
+    "cross-env": "^10.1.0",
     "express": "^4.18.2",
     "express-rate-limit": "^7.5.1",
-    "helmet": "^7.2.0",
+  "helmet": "^7.2.0",
+  "multer": "^1.4.5-lts.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
-    "zone.js": "~0.14.3"
+    "zone.js": "~0.14.3",
+    "bootstrap": "^5.3.3",
+    "@angular/cdk": "^17.3.0",
+    "@angular/material": "^17.3.0"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^17.3.12",
@@ -45,7 +54,7 @@
     "@types/helmet": "^0.0.48",
     "@types/jasmine": "~5.1.0",
     "@types/node": "^18.18.0",
-    "cross-env": "^10.1.0",
+    
     "jasmine-core": "~5.1.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
@@ -53,5 +62,7 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "typescript": "~5.4.2"
+    ,"ts-node": "^10.9.1",
+    "concurrently": "^8.2.0"
   }
 }

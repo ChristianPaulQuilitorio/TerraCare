@@ -1,3 +1,9 @@
+/* Angular Material custom TerraCare theme */
+@use './theme/terracare-theme';
+
+/* Bootstrap */
+@import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
+
 /* You can add global styles to this file, and also import other style files */
 
 :root {
@@ -24,6 +30,44 @@ body {
 	color: #333;
 }
 
+/* TerraCare buttons (global utility) */
+.tc-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8px 14px;
+	border-radius: 8px;
+	text-decoration: none;
+	font-weight: 600;
+	line-height: 1;
+	border: none;
+}
+.tc-primary { background: #2E7D32; color: #fff !important; }
+.tc-primary:hover { background: #256628; color: #fff !important; }
+.tc-outline { border: 2px solid #2E7D32; color: #2E7D32 !important; background: transparent; }
+.tc-outline:hover { background: #E8F5E9; }
+
+/* Apply TerraCare color to Material buttons when class is present */
+.mat-mdc-raised-button.tc-primary,
+.mat-mdc-unelevated-button.tc-primary,
+.mat-mdc-fab.tc-primary,
+.mat-mdc-mini-fab.tc-primary {
+	--mdc-filled-button-container-color: #2E7D32;
+	--mdc-filled-button-label-text-color: #fff;
+}
+.mat-mdc-stroked-button.tc-outline,
+.mat-mdc-outlined-button.tc-outline {
+	--mdc-outlined-button-outline-color: #2E7D32;
+	--mdc-outlined-button-label-text-color: #2E7D32;
+}
+
+/* Stronger fallback to ensure TerraCare green on Material raised buttons */
+button.mat-mdc-raised-button.tc-primary,
+button.mat-mdc-unelevated-button.tc-primary {
+	background-color: #2E7D32 !important;
+	color: #fff !important;
+}
+
 /* Basic responsive utilities */
 .row { display: flex; gap: 16px; }
 .col { flex: 1 1 0%; }
@@ -48,4 +92,74 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Small utilities for touch targets */
 .touch-large { padding: 12px 16px; border-radius: 8px; }
+
+/* Auth dialog polish */
+.auth-backdrop { background: rgba(0,0,0,.45) !important; backdrop-filter: blur(2px); }
+.auth-dialog .mat-mdc-dialog-surface {
+	border-radius: 16px !important;
+	box-shadow: 0 18px 56px rgba(0,0,0,.24) !important;
+}
+
+/* Make links inside auth dialogs use brand green */
+.auth-dialog a { color: var(--brand-green); }
+
+/* Accessibility helpers applied via body classes */
+body.tc-large-font { font-size: 18px; }
+body.tc-high-contrast {
+	background: #fff !important;
+	color: #000 !important;
+}
+body.tc-high-contrast a { color: #0044cc !important; text-decoration: underline; }
+body.tc-high-contrast .mat-mdc-card, body.tc-high-contrast .section, body.tc-high-contrast .profile-header {
+	background: #ffffff !important;
+	color: #000 !important;
+	border: 2px solid #000 !important;
+}
+/* Reduce motion: minimizes transitions and animations */
+body.tc-reduce-motion *, body.tc-reduce-motion *::before, body.tc-reduce-motion *::after {
+	animation: none !important;
+	transition: none !important;
+	scroll-behavior: auto !important;
+}
+
+/* Tour overlay and tooltip */
+.tc-tour-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,0.56);
+	z-index: 20000 !important;
+	pointer-events: auto;
+}
+.tc-tour-tooltip {
+	max-width: 360px;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 22px 60px rgba(6, 24, 44, 0.32);
+	padding: 12px 14px;
+	color: #111;
+	font-size: 14px;
+	line-height: 1.4;
+	z-index: 21000 !important;
+	pointer-events: auto;
+}
+.tc-tour-tooltip h3 { margin: 0 0 6px 0; font-size:16px; }
+.tc-tour-tooltip .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
+.tc-tour-tooltip .actions button { background:#2E7D32; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
+.tc-tour-tooltip .actions button:nth-child(1) { background:#e0e0e0; color:#111; }
+.tc-tour-tooltip .actions button:nth-child(3) { background:#b00020; }
+
+/* Highlight class applied to focused element: use very large z-index and !important to override stacking contexts where possible */
+.tc-tour-highlight {
+	position: relative !important;
+	z-index: 22000 !important;
+	box-shadow: 0 0 0 6px rgba(46,125,50,0.18), 0 18px 48px rgba(0,0,0,0.28) !important;
+	border-radius: 8px !important;
+	transition: box-shadow .28s ease, transform .18s ease;
+}
+
+/* Ensure tooltip and overlay are on top of fixed/sticky elements like navbars */
+header, .mat-toolbar, .navbar, .cdk-overlay-container {
+	z-index: auto;
+}
+
 

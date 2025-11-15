@@ -35,6 +35,9 @@ export class SupabaseService {
 						detectSessionInUrl: true,
 						// Override default navigator.locks-based implementation
 						lock: zoneSafeLock,
+						// Use a dynamic storage that respects "Remember me" (localStorage vs sessionStorage)
+						storage: createAuthStorage(),
+						storageKey: 'terracare-auth',
 					},
 				}
 			);
@@ -87,4 +90,37 @@ function createInMemoryLock() {
 			}
 		}
 	};
+}
+
+// Storage adapter that routes auth tokens to localStorage (remember=true) or sessionStorage (remember=false)
+function createAuthStorage() {
+	const getRemember = () => {
+		try { return (localStorage.getItem('tc.rememberMe') || 'true') !== 'false'; } catch { return true; }
+	};
+	const keyspace = 'terracare-auth';
+	return {
+		getItem(key: string) {
+			try {
+				const remember = getRemember();
+				// Prefer the selected store but fall back to the other to survive preference changes
+				const primary = remember ? localStorage : sessionStorage;
+				const secondary = remember ? sessionStorage : localStorage;
+				return primary.getItem(key) ?? secondary.getItem(key);
+			} catch { return null as any; }
+		},
+		setItem(key: string, value: string) {
+			try {
+				const remember = getRemember();
+				const primary = remember ? localStorage : sessionStorage;
+				const secondary = remember ? sessionStorage : localStorage;
+				primary.setItem(key, value);
+				// Ensure the other store is cleared to avoid duplicates
+				try { secondary.removeItem(key); } catch {}
+			} catch {}
+		},
+		removeItem(key: string) {
+			try { localStorage.removeItem(key); } catch {}
+			try { sessionStorage.removeItem(key); } catch {}
+		}
+	} as Storage;
 }

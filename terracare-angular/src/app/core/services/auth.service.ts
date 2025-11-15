@@ -75,6 +75,46 @@ export class AuthService {
 		if (error) throw error;
 	}
 
+	/**
+	 * Comprehensive logout that:
+	 * - Signs out the Supabase session (global scope: all tabs)
+	 * - Removes persisted auth artifacts from both local & session storage
+	 * - Clears the remember-me flag so future visits start unauthenticated
+	 *
+	 * Does NOT indiscriminately clear all storage to avoid losing unrelated user preferences.
+	 */
+	async logout(): Promise<void> {
+		try {
+			await this.signOut('global');
+		} catch (e) {
+			console.warn('Supabase signOut error (continuing logout):', (e as any)?.message || e);
+		}
+		// Targeted storage cleanup
+		try { localStorage.removeItem('terracare-auth'); } catch {}
+		try { sessionStorage.removeItem('terracare-auth'); } catch {}
+		try { localStorage.removeItem('tc.rememberMe'); } catch {}
+		try { sessionStorage.removeItem('tc.rememberMe'); } catch {}
+		// Cached avatar URL used to reduce flicker on profile
+		try { localStorage.removeItem('tc_avatar_url'); } catch {}
+		// Some Supabase keys may begin with 'sb-' (legacy); remove any that match our url keyspace
+		try {
+			const keys = Object.keys(localStorage);
+			for (const k of keys) {
+				if (k.startsWith('sb-')) {
+					try { localStorage.removeItem(k); } catch {}
+				}
+			}
+		} catch {}
+		try {
+			const keys = Object.keys(sessionStorage);
+			for (const k of keys) {
+				if (k.startsWith('sb-')) {
+					try { sessionStorage.removeItem(k); } catch {}
+				}
+			}
+		} catch {}
+	}
+
 	async getSession(): Promise<Session | null> {
 		try {
 			const { data: { session }, error } = await this.supabase.client.auth.getSession();

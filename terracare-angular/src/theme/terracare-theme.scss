@@ -1,0 +1,22 @@
+@use '@angular/material' as mat;
+
+// Include the common Angular Material core styles.
+@include mat.core();
+
+// Define brand palettes (Material theming API)
+$terracare-primary: mat.define-palette(mat.$green-palette, 700);
+$terracare-accent:  mat.define-palette(mat.$green-palette, A200);
+$terracare-warn:    mat.define-palette(mat.$red-palette);
+
+// Create a light theme based on TerraCare green
+$terracare-theme: mat.define-light-theme((
+  color: (
+    primary: $terracare-primary,
+    accent: $terracare-accent,
+    warn: $terracare-warn,
+  ),
+  typography: mat.define-typography-config(),
+));
+
+// Apply the theme to all Angular Material components
+@include mat.all-component-themes($terracare-theme);

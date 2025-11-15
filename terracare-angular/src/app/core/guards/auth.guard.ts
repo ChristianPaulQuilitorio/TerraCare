@@ -24,22 +24,11 @@ export class AuthGuard implements CanActivate {
         console.warn('Auth guard getSession error:', sessionError?.message || sessionError);
       }
 
-      if (!session) {
-        this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
-        return false;
-      }
+      if (!session) { this.router.navigateByUrl('/'); return false; }
 
       const { data: { user }, error } = await this.supabase.client.auth.getUser();
-      if (error) {
-        console.warn('Auth guard getUser error:', error?.message || error);
-        this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
-        return false;
-      }
+      if (error) { console.warn('Auth guard getUser error:', error?.message || error); this.router.navigateByUrl('/'); return false; }
       return !!user;
-    } catch (error: any) {
-      console.warn('Auth guard exception:', error?.message || error);
-      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
-      return false;
-    }
+    } catch (error: any) { console.warn('Auth guard exception:', error?.message || error); this.router.navigateByUrl('/'); return false; }
   }
 }

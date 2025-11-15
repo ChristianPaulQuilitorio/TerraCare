@@ -14,15 +14,15 @@ export const routes: Routes = [
 	},
 	{ 
 		path: 'login', 
-		loadComponent: () => import('./pages/login/login.component').then(m => m.LoginComponent) 
+		redirectTo: '', pathMatch: 'full' 
 	},
 	{ 
 		path: 'signup', 
-		loadComponent: () => import('./pages/signup/signup.component').then(m => m.SignupComponent) 
+		redirectTo: '', pathMatch: 'full' 
 	},
 	{ 
 		path: 'forgot-password', 
-		loadComponent: () => import('./pages/forgot-password/forgot-password.component').then(m => m.ForgotPasswordComponent) 
+		redirectTo: '', pathMatch: 'full' 
 	},
 	{ 
 		path: 'challenges', 
@@ -39,6 +39,15 @@ export const routes: Routes = [
 		loadComponent: () => import('./pages/challenges/challenge-progress.component').then(m => m.ChallengeProgressComponent),
 		canActivate: [AuthGuard]
 	},
+	{
+		path: 'challenges/archive',
+		loadComponent: () => import('./pages/challenges/archived-challenges.component').then(m => m.ArchivedChallengesComponent),
+		canActivate: [AuthGuard]
+	},
+		{
+			path: 'leaderboard',
+			loadComponent: () => import('./pages/challenges/leaderboard.component').then(m => m.LeaderboardComponent)
+		},
 	{ 
 		path: 'forum', 
 		loadComponent: () => import('./pages/forum/forum.component').then(m => m.ForumComponent),
@@ -63,6 +72,15 @@ export const routes: Routes = [
 	{ 
 		path: 'logout', 
 		loadComponent: () => import('./pages/logout/logout.component').then(m => m.LogoutComponent) 
+	},
+	// Legal routes
+	{
+		path: 'privacy',
+		loadComponent: () => import('./pages/legal/privacy.component').then(m => m.PrivacyComponent)
+	},
+	{
+		path: 'terms',
+		loadComponent: () => import('./pages/legal/terms.component').then(m => m.TermsComponent)
 	},
 	{ path: '**', redirectTo: '' }
 ];

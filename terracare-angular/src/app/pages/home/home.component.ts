@@ -1,11 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { MATERIAL_IMPORTS } from '../../shared/ui/material.imports';
 import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink],
+  imports: [CommonModule, RouterLink, ...MATERIAL_IMPORTS],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss']
 })

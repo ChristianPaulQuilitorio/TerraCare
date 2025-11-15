@@ -5,11 +5,36 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { AuthService } from '../../core/services/auth.service';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ProfileService, ProfileRecord } from '../../core/services/profile.service';
+// Angular Material
+import { MatCardModule } from '@angular/material/card';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { ToastService } from '../../shared/toast/toast.service';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink, ReactiveFormsModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    ReactiveFormsModule,
+    MatCardModule,
+    MatButtonModule,
+    MatIconModule,
+    MatTabsModule,
+    MatFormFieldModule,
+    MatInputModule,
+    MatDividerModule,
+    MatProgressBarModule,
+    MatGridListModule
+  ],
   templateUrl: './profile.component.html',
   styleUrls: ['./profile.component.scss']
 })
@@ -27,10 +52,27 @@ export class ProfileComponent implements OnInit {
   cropSrc: string | null = null;
   cropError = '';
   cropping = false;
+  // Accessibility / Preferences
+  highContrast = false;
+  largeFont = false;
+  reduceMotion = false;
+  private accessibilityStorageKey = 'tc.accessibility.prefs';
+  // Activity stats
+  activityLoading = false;
+  postsCount = 0;
+  knowledgeCount = 0;
+  challengesCompleted = 0;
+  commentsCount = 0;
+  // Responsive state for Material grids
+  isHandset = false;
+  get headerRowHeight(): string { return this.isHandset ? '140px' : '180px'; }
+  get statsRowHeight(): string { return this.isHandset ? '150px' : '170px'; }
+  get quickRowHeight(): string { return this.isHandset ? '68px' : '72px'; }
   
   profileForm: FormGroup = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2)]],
-    email: ['', [Validators.required, Validators.email]]
+    // Email is view-only in profile; keep a disabled control for display/binding
+    email: [{ value: '', disabled: true }]
   });
 
   constructor(
@@ -38,10 +80,18 @@ export class ProfileComponent implements OnInit {
     private router: Router,
     private fb: FormBuilder,
     private profileService: ProfileService,
-    private supabaseSvc: SupabaseService
+    private supabaseSvc: SupabaseService,
+    private toast: ToastService,
+    private breakpoint: BreakpointObserver
   ) {}
 
   async ngOnInit() {
+    // Observe small screens for grid column tweaks
+    try {
+      this.breakpoint.observe([Breakpoints.Handset]).subscribe(res => {
+        this.isHandset = !!res.matches;
+      });
+    } catch {}
     await this.loadUserProfile();
     // Show cached avatar immediately to reduce flicker on hard refresh
     try {
@@ -57,6 +107,10 @@ export class ProfileComponent implements OnInit {
         }
       });
     } catch {}
+    // Load accessibility prefs
+    this.loadAccessibilityPrefs();
+    // Load activity metrics
+    this.loadActivityStats();
   }
 
   async loadUserProfile() {
@@ -120,20 +174,31 @@ export class ProfileComponent implements OnInit {
       this.saving = true;
       this.message = '';
       
-  const formData = this.profileForm.value;
-  // Persist full_name to public.profiles; keep email as display only
-  const res = await this.profileService.upsertMyProfile({ full_name: formData.fullName, avatar_url: this.avatarUrl || undefined });
-  if (!res.success) throw new Error(res.error || 'Failed to save');
-  // Also sync full name to auth metadata for consistency
-  const sync = await this.profileService.syncFullNameToAuth(formData.fullName);
-  if (!sync.success) console.warn('Failed to sync full name to auth metadata:', sync.error);
-  // Update local display
+      const formData = this.profileForm.value;
+      // Persist full_name to public.profiles; keep email as display only
+      const res = await this.profileService.upsertMyProfile({ full_name: formData.fullName, avatar_url: this.avatarUrl || undefined });
+      if (!res.success) throw new Error(res.error || 'Failed to save');
+      // Also sync full name to auth metadata for consistency + dashboard display
+      const sync = await this.profileService.syncFullNameToAuth(formData.fullName);
+      if (!sync.success) console.warn('Failed to sync full name to auth metadata:', sync.error);
+      // Update local display
   this.user.fullName = formData.fullName;
-  this.user.email = formData.email;
+      // Force a light refresh of session metadata so navbar or other injected spots re-render
+      try {
+        const session = await this.supabaseSvc.client.auth.getSession();
+        if (session?.data?.session?.user) {
+          session.data.session.user.user_metadata = {
+            ...session.data.session.user.user_metadata,
+            full_name: formData.fullName,
+            name: formData.fullName,
+            display_name: formData.fullName
+          };
+        }
+      } catch {}
       
       this.editing = false;
       this.message = 'Profile updated successfully!';
-      
+      this.toast.show('Profile updated', 'success');
       // Auto-clear success message
       setTimeout(() => {
         this.message = '';
@@ -142,6 +207,7 @@ export class ProfileComponent implements OnInit {
     } catch (error: any) {
       console.error('Error saving profile:', error);
       this.message = 'Failed to update profile. Please try again.';
+      this.toast.show('Failed to update profile', 'error');
     } finally {
       this.saving = false;
     }
@@ -149,8 +215,9 @@ export class ProfileComponent implements OnInit {
 
   async logout() {
     try {
-      await this.authService.signOut();
-      this.router.navigate(['/login']);
+      await this.authService.logout();
+      this.toast.show('Signed out', 'success');
+      this.router.navigateByUrl('/');
     } catch (error) {
       console.error('Error logging out:', error);
     }
@@ -203,9 +270,11 @@ export class ProfileComponent implements OnInit {
       this.avatarUrl = null;
         try { localStorage.removeItem('tc_avatar_url'); } catch {}
       this.message = 'Profile photo removed';
+      this.toast.show('Profile photo removed', 'success');
       setTimeout(() => this.message = '', 2500);
     } catch (e: any) {
       this.message = e?.message || 'Failed to remove avatar.';
+      this.toast.show(this.message, 'error');
     } finally {
       this.avatarUploading = false;
     }
@@ -227,10 +296,12 @@ export class ProfileComponent implements OnInit {
       this.avatarUrl = res.url;
       await this.profileService.upsertMyProfile({ avatar_url: this.avatarUrl });
       this.message = 'Profile photo updated!';
+      this.toast.show('Profile photo updated', 'success');
       setTimeout(() => this.message = '', 2500);
       this.closeCropper();
     } catch (e: any) {
       this.cropError = e?.message || 'Failed to process image.';
+      this.toast.show(this.cropError, 'error');
     } finally {
       this.cropping = false;
       this.avatarUploading = false;
@@ -272,5 +343,82 @@ export class ProfileComponent implements OnInit {
       img.onerror = (e) => reject(new Error('Failed to load image'));
       img.src = src;
     });
+  }
+
+  // Accessibility prefs
+  toggleHighContrast() { this.highContrast = !this.highContrast; this.applyAccessibility(); }
+  toggleLargeFont() { this.largeFont = !this.largeFont; this.applyAccessibility(); }
+  toggleReduceMotion() { this.reduceMotion = !this.reduceMotion; this.applyAccessibility(); }
+
+  private loadAccessibilityPrefs() {
+    try {
+      const raw = localStorage.getItem(this.accessibilityStorageKey);
+      if (!raw) return;
+      const prefs = JSON.parse(raw);
+      this.highContrast = !!prefs.highContrast;
+      this.largeFont = !!prefs.largeFont;
+      this.reduceMotion = !!prefs.reduceMotion;
+      this.applyAccessibility(false);
+    } catch {}
+  }
+
+  private applyAccessibility(showToast: boolean = true) {
+    // Persist
+    try { localStorage.setItem(this.accessibilityStorageKey, JSON.stringify({ highContrast: this.highContrast, largeFont: this.largeFont, reduceMotion: this.reduceMotion })); } catch {}
+    // Apply classes to document body (SSR-safe)
+    if (typeof document !== 'undefined') {
+      const body = document.body;
+      body.classList.toggle('tc-high-contrast', this.highContrast);
+      body.classList.toggle('tc-large-font', this.largeFont);
+      body.classList.toggle('tc-reduce-motion', this.reduceMotion);
+    }
+    if (showToast) this.toast.show('Accessibility preferences updated', 'success');
+  }
+
+  // Activity stats loader
+  async loadActivityStats() {
+    this.activityLoading = true;
+    try {
+      const currentUser = await this.authService.getCurrentUser();
+      if (!currentUser) { this.activityLoading = false; return; }
+      const uid = currentUser.id;
+      // Parallel queries (best-effort)
+      const supa = this.supabaseSvc.client;
+      const [postsRes, knowledgeRes, commentsRes, challengesCount] = await Promise.all([
+        supa.from('posts').select('id', { count: 'exact', head: true }).eq('author_id', uid),
+        supa.from('knowledge').select('id', { count: 'exact', head: true }).eq('user_id', uid),
+        supa.from('post_comments').select('id', { count: 'exact', head: true }).eq('user_id', uid),
+        // Completed challenges: use leaderboard view (one row per completed challenge per user)
+        (async () => {
+          try {
+            const { count } = await supa
+              .from('leaderboard')
+              .select('challenge_id', { count: 'exact', head: true })
+              .eq('user_id', uid);
+            if (typeof count === 'number') return count;
+          } catch {}
+          // Fallback to challenge_history (count distinct challenge_id where action='completed')
+          try {
+            const { data } = await supa
+              .from('challenge_history')
+              .select('challenge_id')
+              .eq('user_id', uid)
+              .eq('action', 'completed');
+            const unique = new Set<string>((data || []).map((r: any) => r.challenge_id as string)).size;
+            return unique;
+          } catch {
+            return 0;
+          }
+        })()
+      ]);
+      this.postsCount = postsRes.count || 0;
+      this.knowledgeCount = knowledgeRes.count || 0;
+      this.commentsCount = commentsRes.count || 0;
+      this.challengesCompleted = Number(challengesCount) || 0;
+    } catch (e) {
+      console.warn('Activity stats load failed', e);
+    } finally {
+      this.activityLoading = false;
+    }
   }
 }

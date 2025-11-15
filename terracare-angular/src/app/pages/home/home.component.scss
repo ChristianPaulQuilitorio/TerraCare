@@ -77,11 +77,29 @@
     font-size: 2rem;
   }
 
-  .quick-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 2rem;
+  .hub-row {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+    flex-wrap: wrap;
+    margin-top: 8px;
   }
+
+  .hub-card {
+    flex: 1 1 calc(25% - 20px);
+    min-width: 280px;
+    max-width: 100%;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-radius: 14px;
+  }
+
+  .hub-card:hover { transform: translateY(-4px); box-shadow: 0 6px 18px rgba(0,0,0,0.12); }
+  .hub-card .mat-mdc-card-content { padding: 22px 22px 24px; }
+  .hub-card-inner { display:flex; gap: 20px; align-items: flex-start; }
+  .icon-wrap mat-icon { font-size: 34px; width: 34px; height: 34px; }
+  .hub-body h3 { margin: 0 0 6px; font-size: 1.25rem; font-weight: 600; color: #1b3a2a; }
+  .hub-body p { margin: 0; color: #465; font-size: 0.95rem; line-height: 1.4; }
 
   .action-card {
     background: white;
@@ -195,7 +213,5 @@
     padding: 2rem 1rem;
   }
 
-  .quick-actions {
-    grid-template-columns: 1fr;
-  }
+  .dashboard-overview .hub-card { flex: 1 1 100%; }
 }

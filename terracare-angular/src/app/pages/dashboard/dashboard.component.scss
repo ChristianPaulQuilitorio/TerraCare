@@ -47,6 +47,7 @@ body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f6fbf
 	.recent-activity { order: 1; }
 }
 
+
 /* Responsive adjustments */
 @media (max-width: 980px) {
 	.stats-grid { grid-template-columns: repeat(2, 1fr); }

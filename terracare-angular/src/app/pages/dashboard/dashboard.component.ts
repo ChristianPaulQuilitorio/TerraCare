@@ -1,19 +1,20 @@
-import { Component, ViewEncapsulation, OnInit } from '@angular/core';
-import { NavbarComponent } from '../../shared/navbar/navbar.component';
+import { Component, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ActiveChallengesService } from '../../core/services/active-challenges.service';
+import { MATERIAL_IMPORTS } from '../../shared/ui/material.imports';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [NavbarComponent, RouterLink, CommonModule],
+  imports: [RouterLink, CommonModule, ...MATERIAL_IMPORTS],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
   encapsulation: ViewEncapsulation.None,
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   // Dashboard stats
   activeCount = 0;
   knowledgeCount = 0;
@@ -21,17 +22,26 @@ export class DashboardComponent implements OnInit {
 
   // Active challenges for current user
   activeChallenges: Array<any> = [];
+  // Challenge to feature in the Active card (most recently joined, preferring incomplete)
+  featuredActive: any | null = null;
 
   // Leaderboard: top users by challenges completed
   leaderboard: Array<{ user_id: string; name: string; score: number }> = [];
+  impactScore = 0; // current user's total points across all challenges
 
   loading = false;
 
-  constructor(private supabase: SupabaseService, private router: Router, private activeChallengesService: ActiveChallengesService) {}
+  constructor(
+    private supabase: SupabaseService,
+    private router: Router,
+    private activeChallengesService: ActiveChallengesService
+  ) {}
 
   async ngOnInit() {
     await this.loadDashboard();
   }
+
+  ngOnDestroy() {}
 
   async loadDashboard() {
     this.loading = true;
@@ -53,14 +63,44 @@ export class DashboardComponent implements OnInit {
         this.activeChallengesService.load().catch(e => console.warn('Could not load active challenges via service', e));
         // Subscribe to keep local state in sync
         this.activeChallengesService.activeCount$.subscribe(cnt => this.activeCount = cnt);
-        this.activeChallengesService.activeChallenges$.subscribe(arr => this.activeChallenges = arr);
+        this.activeChallengesService.activeChallenges$.subscribe(arr => {
+          this.activeChallenges = arr || [];
+          if (!this.activeChallenges.length) { this.featuredActive = null; return; }
+          // Prefer most recent incomplete; else most recent
+          const byRecent = [...this.activeChallenges].sort((a,b) => new Date(b.joined_at || 0).getTime() - new Date(a.joined_at || 0).getTime());
+          this.featuredActive = byRecent.find(c => (typeof c.progress === 'number' ? c.progress < 100 : true)) || byRecent[0];
+        });
       } catch (e) {
         console.warn('ActiveChallengesService subscription failed', e);
       }
 
-      // Fetch all user_challenges rows to build leaderboard counts (best-effort)
-      const { data: allUserChallenges } = await this.supabase.client.from('user_challenges').select('*');
-      const userChallenges = (allUserChallenges ?? []) as any[];
+      // Leaderboard: prefer RPC that exposes a public-safe leaderboard, then fallback to view/table
+      let allScores: any[] = [];
+      try {
+        // Try RPC
+        const rpc = await this.supabase.client.rpc('get_public_leaderboard', { limit_count: 10 });
+        if (rpc.data && Array.isArray(rpc.data) && rpc.data.length) {
+          // RPC already returns display names; capture for later mapping
+          const rpcNames: Record<string, string> = {};
+          rpc.data.forEach((r: any) => rpcNames[r.user_id] = r.display_name);
+          allScores = rpc.data.map((r: any) => ({ user_id: r.user_id, total_points: r.total_points, _name: rpcNames[r.user_id] }));
+        } else {
+          // Fallback to view
+          const { data: lbRows } = await this.supabase.client.from('leaderboard').select('user_id, total_points');
+          if (lbRows) {
+            const agg: Record<string, number> = {};
+            (lbRows as any[]).forEach((r: any) => { agg[r.user_id] = (agg[r.user_id] || 0) + Number(r.total_points || 0); });
+            allScores = Object.entries(agg).map(([user_id, total_points]) => ({ user_id, total_points }));
+          } else {
+            // fallback: challenge_scores table
+            const { data: scoreRows } = await this.supabase.client.from('challenge_scores').select('user_id,total_points');
+            allScores = (scoreRows || []) as any[];
+          }
+        }
+      } catch {
+        // final fallback sample
+        allScores = [ { user_id:'demo1', total_points:25 }, { user_id:'demo2', total_points:18 } ];
+      }
 
       // map recent activity
       this.recentActivity = (recentPosts ?? []).map((p: any) => ({
@@ -70,27 +110,38 @@ export class DashboardComponent implements OnInit {
         time: p.created_at,
       }));
 
-      // Build leaderboard locally by counting challenge completions per user
-      const counts: Record<string, number> = {};
-      for (const row of userChallenges) {
-        const uid = row.user_id || row.userId || row.user;
-        if (!uid) continue;
-        counts[uid] = (counts[uid] || 0) + 1;
-      }
+      // Build leaderboard from aggregated scores
+      const top = allScores
+        .map(r => ({ user_id: r.user_id, score: Number(r.total_points || 0) }))
+        .sort((a,b) => b.score - a.score)
+        .slice(0,6);
 
-      const top = Object.entries(counts).map(([user_id, score]) => ({ user_id, score }))
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 6);
-
-      // Attempt to fetch display names from `profiles` table (common Supabase pattern)
+      // Resolve display names via secure RPC (profiles > auth.users metadata > email/id)
       const ids = top.map(t => t.user_id).filter(Boolean);
-      let profilesMap: Record<string, any> = {};
-      if (ids.length) {
-        const { data: profiles } = await this.supabase.client.from('profiles').select('id, full_name, username').in('id', ids).limit(100);
-        (profiles ?? []).forEach((p: any) => profilesMap[p.id] = p);
+      const names: Record<string, string> = {};
+      // If RPC provided names in allScores, prefer those
+      allScores.forEach((s: any) => { if (s._name) names[s.user_id] = s._name; });
+      // For any missing, call name RPC
+      const missingForNames = ids.filter(id => !names[id]);
+      if (missingForNames.length) {
+        try {
+          const { data: nameRows } = await this.supabase.client.rpc('get_user_display_names', { ids: missingForNames });
+          (nameRows || []).forEach((r: any) => names[r.id] = r.display_name);
+        } catch {}
       }
 
-      this.leaderboard = top.map(t => ({ user_id: t.user_id, name: profilesMap[t.user_id]?.full_name || profilesMap[t.user_id]?.username || t.user_id, score: t.score }));
+  this.leaderboard = top.map(t => ({ user_id: t.user_id, name: names[t.user_id] || t.user_id, score: t.score }));
+
+      // Load current user's impact score (sum of total_points)
+      try {
+        const userResp = await this.supabase.client.auth.getUser();
+        const user = userResp?.data?.user;
+        if(user){
+          const { data: lbRows } = await this.supabase.client.from('leaderboard').select('user_id, total_points').eq('user_id', user.id);
+          const my = (lbRows || []) as any[];
+          this.impactScore = my.reduce((sum, r) => sum + Number(r.total_points || 0), 0);
+        } else { this.impactScore = 0; }
+      } catch { this.impactScore = 0; }
 
       // active challenges are loaded via ActiveChallengesService (subscriptions above)
 
@@ -108,6 +159,21 @@ export class DashboardComponent implements OnInit {
     } finally {
       this.loading = false;
     }
+  }
+
+  // Quick Actions
+  quickJoinChallenge() {
+    // Navigate to browse challenges for joining
+    this.router.navigate(['/challenges/browse']);
+  }
+  quickCreatePost() {
+    // Navigate to forum where user can create a post (focus draft area)
+    this.router.navigate(['/forum'], { queryParams: { new: '1' } });
+    // Optionally we could set focus after navigation via a small timeout
+  }
+  quickAddResource() {
+    // Navigate to knowledge hub and show upload form via query param
+    this.router.navigate(['/knowledge'], { queryParams: { upload: '1' } });
   }
 
   // recentActivity for dashboard
@@ -150,7 +216,8 @@ export class DashboardComponent implements OnInit {
         if (inserted) {
           alert(`Joined "${c.title || c.id}" — good luck!`);
         } else {
-          alert('Joined locally; could not persist to server (table missing).');
+          // Silent fallback: proceed without showing a toast when local persistence isn't possible
+          console.info('Joined locally; could not persist to server (table missing).');
         }
 
         this.router.navigate(['/challenges/progress']);
