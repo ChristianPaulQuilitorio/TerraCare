@@ -1,7 +1,8 @@
 .dialog-root {
   display: flex;
   flex-direction: column;
-  --footer-height: 72px;
+  /* reduced footer height so composer/footer sits closer to comments on small screens */
+  --footer-height: 60px;
   max-height: 100vh;
   height: 100vh;
 }
@@ -87,10 +88,40 @@
 
 /* Make dialog full width on small screens */
 @media (max-width: 600px) {
-  :host ::ng-deep .forum-post-dialog .mat-dialog-container { padding:0; max-width:100vw !important; height:100vh; }
-  .dialog-root { max-height: 100vh; }
-  .dialog-body { padding:10px 12px 100px 12px; }
+  /* Slightly shorten the modal on mobile so it doesn't feel full-screen-heavy.
+     Use a capped max-height and let the dialog container scroll if needed. */
+  :host ::ng-deep .forum-post-dialog .mat-dialog-container {
+    padding: 0;
+    max-width: 100vw !important;
+    /* reduced from full 100vh to keep modal visually shorter */
+    max-height: 85vh !important;
+    height: auto !important;
+    overflow: auto !important;
+  }
+  /* constrain the dialog root to the same visual height so inner sticky footer works */
+  .dialog-root { max-height: 85vh; }
+  /* dialog-body keeps a bottom padding to avoid overlapping the sticky footer */
+  .dialog-body { padding:10px 12px calc(var(--footer-height) + 8px) 12px; }
   .comments-title { font-size:0.95rem; }
+
+  /* Adjust inner comment list heights to the reduced viewport so they remain scrollable
+     but don't push beyond the shortened modal. */
+  .comments-area {
+    max-height: calc(85vh - var(--footer-height) - 120px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 6px;
+  }
+
+  /* Make composer avatar and input tighter so avatar sits beside the field on narrow screens */
+  .dialog-footer, .composer-left, .composer-center, .composer-right {
+    align-items: center;
+  }
+  .composer-left { width: 40px; }
+  .me-avatar { width: 32px; height: 32px; }
+  .composer-right { width: 44px; }
+  .composer-field .mat-form-field-infix { padding: 6px 8px; min-height: 40px; }
+  .composer-field textarea { min-height:40px; padding:6px; }
 }
 
 .dialog-footer {
@@ -117,13 +148,23 @@
     padding: 0 !important;
     max-width: 100vw !important;
     width: 100vw !important;
-    height: 100vh !important;
-    border-radius: 0 !important;
-    overflow: hidden;
+    /* use a shorter max-height for slightly larger small screens */
+    max-height: 88vh !important;
+    height: auto !important;
+    border-radius: 8px !important;
+    overflow: auto;
   }
-  .dialog-root { max-height: 100vh; height: 100vh; }
-  .dialog-body { padding:12px; padding-bottom: calc(var(--footer-height) + 16px); }
+  .dialog-root { max-height: 88vh; height: 88vh; }
+  .dialog-body { padding:12px; padding-bottom: calc(var(--footer-height) + 8px); }
   .comments-title { font-size:0.95rem; }
   .composer-field .mat-form-field-infix { min-height:56px; }
   .composer-field textarea { min-height:56px; }
+
+  /* Ensure comments area is independently scrollable on slightly larger small screens */
+  .comments-area {
+    max-height: calc(100vh - var(--footer-height) - 180px);
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 8px;
+  }
 }

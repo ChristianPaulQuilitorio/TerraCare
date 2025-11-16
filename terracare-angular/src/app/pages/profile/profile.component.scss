@@ -151,6 +151,13 @@
   .form-actions { flex-direction: column; gap: 8px; }
 }
 
+/* Ensure avatar is centered in the header card on very small screens and text flows next to it */
+@media (max-width: 480px) {
+  .profile-header .avatar { margin: 0 auto; }
+  .profile-header .header-info { text-align: center; }
+  .profile-header .header-stack { grid-template-columns: 1fr; justify-items: center; }
+}
+
 .message {
   padding: 1rem;
   border-radius: 8px;

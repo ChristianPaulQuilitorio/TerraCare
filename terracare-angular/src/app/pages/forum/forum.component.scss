@@ -22,6 +22,18 @@ body { margin: 0; font-family: Arial, sans-serif; background: #f8f9fa; color: #3
 	.quick-actions { display:flex; gap:8px; flex-wrap:wrap; }
 	.post-actions { display:flex; justify-content:flex-end; }
 }
+
+/* On very narrow screens keep avatar beside the input but shrink sizes so everything fits */
+@media (max-width: 360px) {
+  .cp-top { flex-direction: row; align-items: center; gap: 8px; }
+  .create-post .avatar { width: 36px; height: 36px; margin-bottom: 0; }
+  .create-post .avatar .avatar-text { font-size: 0.9rem; }
+  .create-post .draft-field { flex: 1 1 auto; min-width: 0; }
+	.create-post textarea { padding: 6px 8px; font-size: 0.9rem; min-height: 36px; line-height:1.1; }
+  .cp-actions { flex-direction: row; justify-content: space-between; gap: 8px; }
+  .quick-actions { order: 2; }
+  .post-actions { order: 3; }
+}
 .cp-actions { display:flex; justify-content:flex-end; align-items:center; }
 .quick-actions .qa { background:transparent; border:1px solid #e6f3ea; padding:6px 10px; border-radius:8px; color:#2E7D32; cursor:pointer; }
 .attachment-preview { max-width:760px; margin:8px auto; display:flex; gap:12px; align-items:center; }

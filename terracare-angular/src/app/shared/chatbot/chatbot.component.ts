@@ -160,7 +160,8 @@ interface Message { role: 'user' | 'assistant' | 'system'; content: string }
         max-width: none;
         bottom: 0;
         top: auto;
-        height: 94vh; /* slightly taller panel so reply canvas can be higher */
+        /* reduce mobile panel height slightly to leave more room for browser UI */
+        height: 90vh;
         border-radius: 14px 14px 0 0;
         transform: translateY(100%);
         transition: transform 320ms cubic-bezier(.2,.9,.2,1), opacity 200ms ease-in-out;
@@ -170,7 +171,8 @@ interface Message { role: 'user' | 'assistant' | 'system'; content: string }
       .chat-header { padding:12px 16px; }
       .chat-title { font-size:18px; }
       .chat-status { font-size:13px }
-      .chat-body { margin:10px; padding:12px; height: calc(94vh - 220px); overflow:auto; color: #fff; }
+      /* Adjust chat-body calc to match the reduced panel height and keep the composer visible */
+      .chat-body { margin:10px; padding:12px; height: calc(90vh - 200px); overflow:auto; color: #fff; }
       .bubble { font-size:15px; line-height:1.4; }
       .msg.assistant .bubble { background: rgba(255,255,255,0.04); color:#ffffff; border: none; }
       .msg.user .bubble { background: var(--tc-accent); color:#fff; }
