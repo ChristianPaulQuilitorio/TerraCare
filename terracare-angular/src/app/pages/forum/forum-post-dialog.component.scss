@@ -1,0 +1,129 @@
+.dialog-root {
+  display: flex;
+  flex-direction: column;
+  --footer-height: 72px;
+  max-height: 100vh;
+  height: 100vh;
+}
+.dialog-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0;
+  border-bottom: none;
+}
+.dialog-header { background: #f5f5f5; color: #222; padding: 8px 10px; border-radius: 12px 12px 0 0; }
+.dialog-header .header-left, .dialog-header .header-right { width:48px; display:flex; align-items:center; justify-content:center; }
+.header-title { flex:1 1 auto; text-align:center; }
+.header-title h2 { margin:0; font-size:1.05rem; font-weight:600; color:#222; }
+.author-avatar { width:36px; height:36px; border-radius:50%; overflow:hidden; background:#e9ecef; display:flex; align-items:center; justify-content:center; }
+.author-avatar img { width:100%; height:100%; object-fit:cover; }
+.author-avatar .initial { color:#333; }
+.close-circle { background: transparent; border-radius:50%; }
+.dialog-body { padding: 12px; overflow:auto; flex:1 1 auto; background: #fff; color:#222; padding-bottom: calc(var(--footer-height) + 16px); }
+.post-area { margin-bottom: 12px; }
+.post-content { white-space: pre-wrap; color:#222; }
+.attachment { width: 100%; border-radius: 8px; margin-top: 8px; }
+.comments-area { margin-top: 8px; }
+.comments-title-row { display:flex; align-items:center; justify-content:space-between; }
+.comments-title { margin:0; padding:6px 12px; border-radius:20px; background: #f0f4f8; color:#0b57a4; font-weight:600; }
+.comments-count { font-size:0.85rem; color:rgba(0,0,0,0.6); }
+.muted { color: rgba(0,0,0,0.6); }
+.comment-card { display:flex; gap:12px; padding:12px; background: #fff; border-radius:12px; margin:10px 0; box-shadow: 0 1px 3px rgba(16,24,40,0.06); border:1px solid rgba(0,0,0,0.04); }
+.comment-left { width:48px; }
+.c-avatar { width:40px; height:40px; border-radius:50%; overflow:hidden; background: #f0f2f5; display:flex; align-items:center; justify-content:center; }
+.c-avatar img { width:100%; height:100%; object-fit:cover; }
+.c-initial { color:#333; font-weight:600; }
+.comment-right { flex:1 1 auto; }
+.comment-meta-row { display:flex; justify-content:space-between; align-items:center; }
+.small-actions { display:flex; gap:6px; }
+.small-btn { font-size:0.85rem; min-width:36px; height:28px; }
+.comment-body { margin-top:6px; color:#222; }
+.reply-composer { display:flex; gap:8px; align-items:center; margin-top:8px; }
+.reply-field { flex:1 1 auto; }
+.comment-actions {
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-top: 12px;
+}
+.reply-field textarea { width:100%; min-height:56px; resize:vertical; box-sizing: border-box; padding:8px; border-radius:12px; }
+.reply-field .mat-form-field-wrapper { padding:0; }
+.replies { margin-left: 8px; margin-top: 8px; }
+.reply { padding:6px 0; background: #fbfbfb; border-radius:8px; padding:8px; margin-top:6px; border:1px solid rgba(0,0,0,0.03); }
+.reply-meta { font-size:0.85rem; color:rgba(0,0,0,0.85); }
+.reply-body { margin-top:4px; color: #222; }
+.show-more, .show-less { margin-top:8px; }
+.reply-node { margin-left: 36px; }
+.load-more { text-align:center; margin-top:8px; }
+.dialog-footer { display:flex; gap:8px; padding:10px; border-top: 1px solid rgba(0,0,0,0.06); background: #fff; align-items: center; position: sticky; bottom: 0; }
+.composer-left { width:48px; display:flex; align-items:center; justify-content:center; }
+.me-avatar { width:36px; height:36px; border-radius:50%; background: #f0f2f5; display:flex; align-items:center; justify-content:center; }
+.me-initial { color:#333; }
+.composer-center { flex:1 1 auto; }
+.composer-field .mat-form-field-infix { background: #f6f8fa; border-radius:24px; padding:6px 12px; min-height:44px; }
+.composer-field textarea { width:100%; min-height:56px; resize:vertical; box-sizing: border-box; padding:8px; border-radius:18px; }
+.composer-field { width:100%; }
+
+/* Hide number input spinners inside dialog to avoid visual artifacts */
+:host ::ng-deep .forum-post-dialog input[type=number]::-webkit-outer-spin-button,
+:host ::ng-deep .forum-post-dialog input[type=number]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+:host ::ng-deep .forum-post-dialog input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+/* Layout tweaks for composer and reply composer */
+.composer-center { padding-right: 8px; }
+.composer-right { padding-left: 4px; }
+.reply-composer { display:flex; gap:8px; align-items:flex-start; }
+.reply-composer .reply-field { flex:1 1 auto; }
+.reply-composer button { margin-top:8px; }
+.composer-field .mat-form-field-appearance-fill .mat-form-field-flex { padding:0; }
+.composer-right { width:56px; display:flex; align-items:center; justify-content:center; }
+
+/* Make dialog full width on small screens */
+@media (max-width: 600px) {
+  :host ::ng-deep .forum-post-dialog .mat-dialog-container { padding:0; max-width:100vw !important; height:100vh; }
+  .dialog-root { max-height: 100vh; }
+  .dialog-body { padding:10px 12px 100px 12px; }
+  .comments-title { font-size:0.95rem; }
+}
+
+.dialog-footer {
+  display:flex;
+  gap:8px;
+  padding:8px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  background: white;
+  align-items: flex-end;
+  position: sticky;
+  bottom: 0;
+}
+.comment-field { flex: 1 1 auto; }
+
+/* Mobile tweaks */
+@media (max-width: 600px) {
+  .dialog-root { max-height: 100vh; }
+  .dialog-footer { padding: 10px; }
+  .dialog-header h2 { font-size: 1rem; }
+}
+@media (max-width: 720px) {
+  /* Make the dialog occupy the full viewport on small screens */
+  :host ::ng-deep .forum-post-dialog .mat-dialog-container {
+    padding: 0 !important;
+    max-width: 100vw !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    overflow: hidden;
+  }
+  .dialog-root { max-height: 100vh; height: 100vh; }
+  .dialog-body { padding:12px; padding-bottom: calc(var(--footer-height) + 16px); }
+  .comments-title { font-size:0.95rem; }
+  .composer-field .mat-form-field-infix { min-height:56px; }
+  .composer-field textarea { min-height:56px; }
+}

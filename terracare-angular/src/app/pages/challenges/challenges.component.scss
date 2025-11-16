@@ -5,6 +5,9 @@ body {
   color: #333;
 }
 
+/* Make sure sizing includes padding/border to avoid unexpected overflow */
+*, *::before, *::after { box-sizing: border-box; }
+
 .hero {
   position: relative;
   text-align: center;
@@ -445,6 +448,45 @@ body {
   .browse-list {
     padding: 1rem;
   }
+}
+
+/* Additional mobile/responsive fixes to prevent horizontal overflow and
+   ensure hero/featured cards stack nicely on small viewports. */
+@media (max-width: 720px) {
+  .browse-hero { padding-left: 12px; padding-right: 12px; }
+
+  /* Featured card: stack instead of fixed-width side-by-side */
+  .featured-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .featured-thumb {
+    width: 100%;
+    height: 180px;
+    background-size: cover; /* better fill on small screens */
+  }
+  .featured-body { padding: 12px; }
+
+  /* Journey section: avoid fixed min-widths that force horizontal scrolling */
+  .journey-left, .journey-right { flex: 1 1 100%; min-width: auto; }
+  .journey-row { gap: 12px; }
+
+  /* Controls and search should wrap vertically */
+  .browse-controls { padding: 12px; }
+  .search-row { flex-direction: column; align-items: stretch; gap: 8px; }
+  .search, .sort { width: 100%; max-width: 100%; }
+
+  /* Reduce padding on main grid containers to avoid overflow from combined paddings */
+  .browse-grid, .featured, .browse-list { padding-left: 12px; padding-right: 12px; }
+
+  /* Marquee: reduce inner padding so horizontal scroll stays within viewport */
+  .marquee-frame { padding-left: 12px; padding-right: 12px; }
+
+  /* Small cards in marquee/list */
+  .marquee-item { width: 200px; }
+
+  /* Ensure modal width adapts cleanly */
+  .modal { width: min(720px, 95vw); }
 }
 
 

@@ -157,6 +157,22 @@ body.tc-reduce-motion *, body.tc-reduce-motion *::before, body.tc-reduce-motion 
 	transition: box-shadow .28s ease, transform .18s ease;
 }
 
+/* Make the tour tooltip slightly smaller and more compact on narrow viewports
+	 so it doesn't overflow or crowd mobile screens. We use a max of viewport width
+	 minus small gutters and reduce padding/font-size for readability on small devices. */
+@media (max-width: 720px) {
+	.tc-tour-tooltip {
+		max-width: calc(100vw - 32px);
+		width: auto;
+		padding: 10px 10px;
+		font-size: 13px;
+		box-shadow: 0 12px 30px rgba(6,24,44,0.22);
+	}
+	.tc-tour-tooltip h3 { font-size: 15px; }
+	.tc-tour-tooltip .actions { gap:6px; }
+	.tc-tour-tooltip .actions button { padding:6px 8px; font-size:13px; }
+}
+
 /* Ensure tooltip and overlay are on top of fixed/sticky elements like navbars */
 header, .mat-toolbar, .navbar, .cdk-overlay-container {
 	z-index: auto;

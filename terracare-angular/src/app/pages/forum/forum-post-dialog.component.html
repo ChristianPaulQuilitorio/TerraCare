@@ -1,0 +1,78 @@
+<div class="dialog-root">
+  <div class="dialog-header">
+    <div class="header-left">
+      <div class="author-avatar">
+        <img *ngIf="data.post.author_avatar_url" [src]="data.post.author_avatar_url" alt="author" />
+        <div *ngIf="!data.post.author_avatar_url" class="initial">{{ (data.post.author_name || '').charAt(0) || '?' }}</div>
+      </div>
+    </div>
+    <div class="header-title">
+      <h2>{{ data.post.title || (data.post.author_name + "'s Post") }}</h2>
+    </div>
+    <div class="header-right">
+      <button mat-icon-button class="close-circle" (click)="close()" aria-label="Close dialog"><mat-icon>close</mat-icon></button>
+    </div>
+  </div>
+
+  <div class="dialog-body">
+    <div class="post-area">
+      <p class="post-content">{{ data.post.content }}</p>
+      <ng-container *ngIf="data.post.attachment_url as url">
+        <img *ngIf="data.post.attachment_type==='image'" [src]="url" alt="attachment" class="attachment" />
+        <video *ngIf="data.post.attachment_type==='video'" [src]="url" controls class="attachment"></video>
+      </ng-container>
+    </div>
+
+    <div class="comments-area">
+      <div class="comments-title-row">
+        <h3 class="comments-title">Comments</h3>
+        <div class="comments-count muted">{{ comments.length }} comments</div>
+      </div>
+      <mat-progress-bar *ngIf="loadingComments" mode="indeterminate" color="accent"></mat-progress-bar>
+      <div *ngIf="!loadingComments && comments.length===0" class="no-comments muted">No comments yet — be the first to reply.</div>
+
+      <ng-container *ngFor="let comment of comments">
+        <div class="comment-card">
+          <div class="comment-left">
+            <div class="c-avatar">
+              <img *ngIf="comment.avatar_url" [src]="comment.avatar_url" alt="avatar" />
+              <div *ngIf="!comment.avatar_url" class="c-initial">{{ (comment.display_name || comment.user_id || '').charAt(0) || '?' }}</div>
+            </div>
+          </div>
+          <div class="comment-right">
+            <div class="comment-meta-row">
+              <div class="meta-left"><strong>{{ comment.display_name || (comment.user_id | slice:0:8) }}</strong>
+                <span class="muted"> • {{ formatTimestamp(comment.created_at) }}</span></div>
+            </div>
+            <div class="comment-body">{{ comment.content }}</div>
+            <div class="comment-actions">
+              <button mat-icon-button (click)="toggleCommentHeart(comment)" [color]="comment.viewer_has_hearted ? 'warn' : undefined"><mat-icon>{{ comment.viewer_has_hearted ? 'favorite' : 'favorite_border' }}</mat-icon></button>
+              <span class="action-count">{{ comment.hearts_count || 0 }}</span>
+              <button mat-button color="warn" *ngIf="comment.can_delete" (click)="confirmDelete(comment, null)">Delete</button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="load-more" *ngIf="hasMore">
+        <button mat-button (click)="loadComments(comments.length)">Load more</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="dialog-footer">
+    <div class="composer-left">
+      <div class="me-avatar">
+        <div class="me-initial">{{ userDisplayName ? userDisplayName.charAt(0) : 'U' }}</div>
+      </div>
+    </div>
+    <div class="composer-center">
+      <mat-form-field appearance="fill" class="composer-field">
+        <textarea matInput rows="1" placeholder="Comment as {{ userDisplayName || 'you' }}" [(ngModel)]="newComment" (input)="autoResize($event)" ></textarea>
+      </mat-form-field>
+    </div>
+    <div class="composer-right">
+      <button mat-mini-fab color="primary" (click)="addComment()" [disabled]="adding || !newComment.trim()"><mat-icon>send</mat-icon></button>
+    </div>
+  </div>
+</div>

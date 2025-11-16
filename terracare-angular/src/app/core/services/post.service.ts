@@ -39,10 +39,15 @@ export interface ForumComment {
   draft_content?: string;
   parent_comment_id?: string | null;
   replies?: ForumComment[]; // nested in-memory only
+  avatar_url?: string | null;
   hearts_count?: number;
   viewer_has_hearted?: boolean;
   // UI-only: whether the inline reply composer is visible for this comment
   replying?: boolean;
+  // UI-only: temporary draft for an inline reply composer
+  replyDraft?: string;
+  // UI-only: whether a reply submission is pending
+  replyPending?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -249,7 +254,10 @@ export class PostService {
       .insert([{ post_id: postId, user_id: user.id, content }])
       .select('id, post_id, user_id, content, created_at, parent_comment_id')
       .single();
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      console.warn('[post.service] addComment error:', error);
+      return { success: false, error: error.message };
+    }
     const comment: ForumComment = data as any;
     comment.display_name = (user.user_metadata?.['full_name'] as string | undefined) || user.email || user.id;
   comment.can_edit = true;
@@ -267,7 +275,10 @@ export class PostService {
       .insert([{ post_id: parentComment.post_id, user_id: user.id, content, parent_comment_id: parentComment.id }])
       .select('id, post_id, user_id, content, created_at, parent_comment_id')
       .single();
-    if (error) return { success: false, error: error.message };
+    if (error) {
+      console.warn('[post.service] addReply error:', error);
+      return { success: false, error: error.message };
+    }
     const reply: ForumComment = data as any;
     reply.display_name = (user.user_metadata?.['full_name'] as string | undefined) || user.email || user.id;
   reply.can_edit = true;
