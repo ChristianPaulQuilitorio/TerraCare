@@ -5,6 +5,58 @@
   min-height: 100vh;
 }
 
+/* Modal backdrop and cropper dialog styles */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1200;
+  padding: 16px;
+}
+
+.modal {
+  background: #fff;
+  color: #222;
+  padding: 16px;
+  border-radius: 10px;
+  max-width: 720px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.24);
+  position: relative;
+}
+
+.modal .cropper {
+  width: min(92vw, 320px) !important;
+  height: min(92vw, 320px) !important;
+  margin: 12px auto;
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #000;
+}
+
+.modal .cropper img {
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: none;
+  width: auto;
+  height: 100%;
+  object-fit: cover;
+}
+
+.modal-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: #555;
+}
+
 .loading-state {
   text-align: center;
   padding: 4rem 2rem;

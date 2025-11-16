@@ -238,7 +238,6 @@ export class ProfileComponent implements OnInit {
     const file = input.files[0];
     this.message = '';
     this.cropError = '';
-
     // Validate image type and size
     const MAX_SIZE = 5 * 1024 * 1024; // 5MB
     if (!file.type.startsWith('image/')) {
@@ -252,12 +251,26 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    // Open simple cropper dialog with centered square preview
-    const url = URL.createObjectURL(file);
-    this.cropSrc = url;
-    this.cropDialogOpen = true;
-    // Clear the input so same file can be re-selected later
-    setTimeout(() => { try { if (input) input.value = ''; } catch {} }, 0);
+    // Immediately upload the file (no cropping step)
+    this.avatarUploading = true;
+    try {
+      const res = await this.profileService.uploadAvatar(file);
+      if (!res.success || !res.url) throw new Error(res.error || 'Upload failed');
+      this.avatarUrl = res.url;
+      try { if (this.avatarUrl) localStorage.setItem('tc_avatar_url', this.avatarUrl); } catch {}
+      // Persist to profiles row
+      try { await this.profileService.upsertMyProfile({ avatar_url: this.avatarUrl }); } catch {}
+      this.message = 'Profile photo updated!';
+      this.toast.show('Profile photo updated', 'success');
+      setTimeout(() => this.message = '', 2500);
+    } catch (e: any) {
+      this.message = e?.message || 'Failed to upload avatar.';
+      this.toast.show(this.message, 'error');
+    } finally {
+      this.avatarUploading = false;
+      // Clear the input so same file can be re-selected later
+      try { if (input) input.value = ''; } catch {}
+    }
   }
 
   async removeAvatar() {
