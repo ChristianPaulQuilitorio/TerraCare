@@ -528,6 +528,13 @@ import { environment } from '../../../environments/environment';
     .task-row { display:flex; align-items:flex-end; gap:8px; margin-bottom:8px; }
     .task-field { flex:1; }
     .error-text { color:#b00020; font-size:13px; }
+    @media (max-width: 420px) {
+      .task-row { flex-direction: column; align-items: stretch; }
+      .task-row .task-field { width: 100%; }
+      .task-row button[aria-label="Remove task"] { align-self: flex-end; }
+      .attach-row { flex-direction: column; align-items: stretch; }
+      .attach-row input[type="file"] { width: 100%; }
+    }
   `]
 })
 export class CreateChallengeDialogComponent {

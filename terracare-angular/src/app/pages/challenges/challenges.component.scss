@@ -489,6 +489,17 @@ body {
   .modal { width: min(720px, 95vw); }
 }
 
+/* Improve input readability and touch targets on very small screens (mobile) */
+@media (max-width: 420px) {
+  .form-input, .form-textarea {
+    font-size: 1rem; /* slightly larger for legibility */
+    font-weight: 600; /* a bit of weight for emphasis on small screens */
+    padding: 12px !important; /* bigger touch area */
+    border-radius: 10px;
+  }
+  .form-textarea { min-height: 120px !important; }
+}
+
 
 
 /* Progress page specific styles */
@@ -547,6 +558,72 @@ body {
 @media (max-width: 720px) {
   .progress-summary { flex-direction:column; }
   .summary-cards { flex-direction:column; }
+}
+
+/* Mobile: create-challenge modal improvements for small screens */
+@media (max-width: 420px) {
+  /* Make dialog visually full screen but inset slightly from edges */
+  .modal {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    margin: 8px auto !important;
+    border-radius: 10px;
+    padding: 12px !important;
+    max-height: 92vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Allow the inner content to scroll while keeping footer visible */
+  .modal .modal-body, .modal .form-body, .modal .details-content {
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(92vh - 120px);
+    padding-right: 6px;
+  }
+
+  /* Make footer sticky at bottom so actions are always reachable */
+  .modal-footer, .form-footer {
+    position: sticky;
+    bottom: 0;
+    background: linear-gradient(180deg, rgba(255,255,255,0.95), #fff);
+    padding: 10px 8px;
+    display: flex;
+    gap: 8px;
+    justify-content: space-between;
+    border-top: 1px solid #eee;
+    z-index: 10;
+  }
+
+  /* Make buttons easier to tap and full-width when stacked */
+  .modal-footer button, .form-footer button, .btn.small, .btn {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+
+  /* File chooser area: use full width and stack controls */
+  input[type="file"] { display: block; width: 100% !important; }
+  .preview-area img { max-width: 100%; height: auto; }
+
+  /* Tasks area: wrap chips and enlarge tap targets */
+  .tasks, .task-list, .task-row {
+    display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+  }
+  .tasks button, .task-chip, .pill { min-width: 80px; padding: 10px 12px; border-radius:8px; }
+
+  /* Ensure form inputs take full width and are easy to read */
+  .form-input, .form-textarea, .draft-field textarea, .mat-form-field {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* Slightly reduce the modal title size so header doesn't crowd */
+  .modal-header h2, .modal h3 { font-size: 1.05rem; margin: 0 0 8px 0; }
+
+  /* Make small icons/toggles reachable but compact */
+  .close, .modal-close, .carousel-nav { width:40px; height:40px; }
 }
 
 /* Removed duplicate navbar styles; navbar styling now lives in shared/navbar */
