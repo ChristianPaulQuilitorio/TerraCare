@@ -58,6 +58,12 @@
           <ol class="leaderboard-grid">
             <li *ngFor="let lb of (leaderboard | slice:0:3); index as i">
               <div class="rank">#{{ i + 1 }}</div>
+              <div class="avatar-small">
+                <img *ngIf="lb.avatarUrl; else lbInitial" [src]="lb.avatarUrl" alt="avatar" />
+                <ng-template #lbInitial>
+                  <div class="avatar-initial">{{ lb.name ? lb.name.charAt(0) : (lb.user_id || '?').charAt(0) }}</div>
+                </ng-template>
+              </div>
               <div class="info">
                 <div class="name">{{ lb.name }}</div>
                 <div class="meta muted">{{ lb.user_id }}</div>
@@ -104,8 +110,18 @@
             <h4>Leaderboard</h4>
             <ol class="leader-list">
               <li *ngFor="let lb of leaderboard">
-                <span class="leader-name">{{ lb.name }}</span>
-                <span class="leader-score">{{ lb.score }}</span>
+                <div class="leader-entry">
+                  <div class="leader-left">
+                    <div class="leader-avatar">
+                      <img *ngIf="lb.avatarUrl; else leaderInitial" [src]="lb.avatarUrl" alt="avatar" />
+                      <ng-template #leaderInitial>
+                        <div class="leader-initial">{{ lb.name ? lb.name.charAt(0) : (lb.user_id || '?').charAt(0) }}</div>
+                      </ng-template>
+                    </div>
+                    <div class="leader-name">{{ lb.name }}</div>
+                  </div>
+                  <div class="leader-score">{{ lb.score }}</div>
+                </div>
               </li>
             </ol>
           </div>

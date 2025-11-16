@@ -75,3 +75,17 @@ body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f6fbf
 	.leaderboard-grid .rank { width: 36px; height: 36px; }
 	.leaderboard-grid .score { min-width: 48px; }
 }
+
+/* Avatar styles for leaderboard entries */
+.leaderboard-grid .avatar-small { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; display:flex; align-items:center; justify-content:center; background:#f6faf6; }
+.leaderboard-grid .avatar-small img { width:100%; height:100%; object-fit:cover; display:block; }
+.leaderboard-grid .avatar-initial { font-weight:700; color:#2E7D32; }
+
+.leader-list li { display:flex; justify-content:space-between; align-items:center; padding:8px; border-radius:6px; background:#fbfff9; margin-bottom:6px; }
+.leader-entry { display:flex; align-items:center; justify-content:space-between; width:100%; }
+.leader-left { display:flex; align-items:center; gap:10px; }
+.leader-avatar { width:36px; height:36px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f6faf6; }
+.leader-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+.leader-initial { font-weight:700; color:#2E7D32; width:100%; text-align:center; }
+.leader-name { font-weight:600; }
+.leader-score { background:#e6f3ea; color:#2E7D32; padding:4px 8px; border-radius:6px; font-weight:700; }

@@ -24,6 +24,7 @@ export class ForumPostDialogComponent implements OnInit {
   isLoggedIn = false;
   userId: string | null = null;
   userDisplayName: string | null = null;
+  userAvatarUrl: string | null = null;
 
   constructor(
     private dialogRef: MatDialogRef<ForumPostDialogComponent>,
@@ -44,6 +45,9 @@ export class ForumPostDialogComponent implements OnInit {
     this.isLoggedIn = !!u;
     this.userId = u?.id ?? null;
     this.userDisplayName = (u?.user_metadata?.['full_name'] as string | undefined) ?? u?.email ?? null;
+    try {
+      this.userAvatarUrl = typeof window !== 'undefined' ? localStorage.getItem('tc_avatar_url') : null;
+    } catch { this.userAvatarUrl = null; }
     this.cdr.markForCheck();
   }
 

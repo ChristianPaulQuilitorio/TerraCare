@@ -26,7 +26,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   featuredActive: any | null = null;
 
   // Leaderboard: top users by challenges completed
-  leaderboard: Array<{ user_id: string; name: string; score: number }> = [];
+  leaderboard: Array<{ user_id: string; name: string; score: number; avatarUrl?: string | null }> = [];
   impactScore = 0; // current user's total points across all challenges
 
   loading = false;
@@ -116,7 +116,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         .sort((a,b) => b.score - a.score)
         .slice(0,6);
 
-      // Resolve display names via secure RPC (profiles > auth.users metadata > email/id)
+      // Resolve display names and avatars via secure RPC (profiles > auth.users metadata > email/id)
       const ids = top.map(t => t.user_id).filter(Boolean);
       const names: Record<string, string> = {};
       // If RPC provided names in allScores, prefer those
@@ -130,7 +130,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
         } catch {}
       }
 
-  this.leaderboard = top.map(t => ({ user_id: t.user_id, name: names[t.user_id] || t.user_id, score: t.score }));
+      // Also try to resolve avatars from public.profiles
+      const avatars: Record<string, string | null> = {};
+      try {
+        if (ids.length) {
+          const { data: profileRows } = await this.supabase.client.from('profiles').select('id, avatar_url').in('id', ids as string[]);
+          (profileRows || []).forEach((r: any) => { avatars[r.id] = r.avatar_url || null; });
+        }
+      } catch (e) {
+        // ignore
+      }
+
+  this.leaderboard = top.map(t => ({ user_id: t.user_id, name: names[t.user_id] || t.user_id, score: t.score, avatarUrl: avatars[t.user_id] || null }));
 
       // Load current user's impact score (sum of total_points)
       try {

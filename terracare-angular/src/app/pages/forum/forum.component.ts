@@ -25,6 +25,7 @@ export class ForumComponent implements OnInit {
   readonly pageSize = 10;
   userName: string | null = null;
   userId: string | null = null;
+  userAvatarUrl: string | null = null;
   attachedFile: File | null = null;
   attachedPreview: string | null = null;
   attachedPreviewType: 'image' | 'video' | null = null;
@@ -57,6 +58,9 @@ export class ForumComponent implements OnInit {
     this.isLoggedIn = !!user;
     this.userId = user?.id ?? null;
     this.userName = (user?.user_metadata?.['full_name'] as string | undefined) ?? user?.email ?? null;
+    try {
+      this.userAvatarUrl = typeof window !== 'undefined' ? localStorage.getItem('tc_avatar_url') : null;
+    } catch { this.userAvatarUrl = null; }
     this.cdr.markForCheck();
   }
 

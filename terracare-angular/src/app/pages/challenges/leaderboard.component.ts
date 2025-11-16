@@ -13,6 +13,7 @@ interface LeaderboardRow {
   points?: number;
   challenge_id?: string;
   challenge_title?: string;
+  avatarUrl?: string | null;
 }
 
 @Component({
@@ -23,28 +24,30 @@ interface LeaderboardRow {
     <div class="container" style="padding: 16px;">
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap: wrap;">
         <h2 style="margin:0;">Leaderboard</h2>
-        <div style="display:flex; gap:8px; align-items:center;">
-          <mat-form-field appearance="outline">
-            <mat-label>Filter by challenge</mat-label>
-            <input matInput placeholder="e.g. Tree Planting" (input)="challengeFilter = ($any($event.target).value || '').toLowerCase()" />
-          </mat-form-field>
-          <button mat-stroked-button (click)="refresh()" [disabled]="loading">Refresh</button>
-        </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button mat-stroked-button (click)="refresh()" [disabled]="loading">Refresh</button>
+          </div>
       </div>
 
       <div *ngIf="loading" style="margin-top:12px;">
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
 
-      <div *ngIf="!loading && filteredRows.length === 0" style="margin-top:16px; color:#666;">
+      <div *ngIf="!loading && rows.length === 0" style="margin-top:16px; color:#666;">
         No leaderboard data yet.
       </div>
 
       <div style="display:grid; gap:12px; margin-top:16px;">
-        <mat-card *ngFor="let row of filteredRows; index as i">
+        <mat-card *ngFor="let row of rows; index as i">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
             <div style="display:flex; align-items:center; gap:12px;">
               <div style="font-weight:700; width:2ch; text-align:right;">{{ i + 1 }}</div>
+              <div style="width:44px; height:44px; border-radius:50%; overflow:hidden; display:flex; align-items:center; justify-content:center; background:#f6faf6;">
+                <img *ngIf="row.avatarUrl; else avatarInit" [src]="row.avatarUrl" alt="avatar" style="width:100%; height:100%; object-fit:cover; display:block;" />
+                <ng-template #avatarInit>
+                  <div style="font-weight:700; color:#2E7D32;">{{ (row.display_name || row.user || row.email || '?').charAt(0) }}</div>
+                </ng-template>
+              </div>
               <div>
                 <div style="font-weight:600;">{{ row.display_name || row.user || row.email || 'User' }}</div>
                 <div style="font-size: 12px; color:#666;">{{ row.challenge_title || 'All Challenges' }}</div>
@@ -59,7 +62,6 @@ interface LeaderboardRow {
 })
 export class LeaderboardComponent implements OnInit {
   rows: LeaderboardRow[] = [];
-  challengeFilter = '';
   loading = false;
 
   constructor(private supabase: SupabaseService, private toast: ToastService) {}
@@ -68,11 +70,7 @@ export class LeaderboardComponent implements OnInit {
     this.refresh();
   }
 
-  get filteredRows(): LeaderboardRow[] {
-    const f = this.challengeFilter.trim();
-    if (!f) return this.rows;
-    return this.rows.filter(r => (r.challenge_title || '').toLowerCase().includes(f));
-  }
+  // Note: filtering removed — iterate `rows` directly
 
   async refresh() {
     this.loading = true;
@@ -120,7 +118,7 @@ export class LeaderboardComponent implements OnInit {
         const profilesMap: Record<string, any> = {};
         if (ids1.length) {
           try {
-            const { data: profiles } = await this.supabase.client.from('profiles').select('id, full_name, username').in('id', ids1).limit(200);
+            const { data: profiles } = await this.supabase.client.from('profiles').select('id, full_name, username, avatar_url').in('id', ids1).limit(200);
             (profiles ?? []).forEach((p: any) => profilesMap[p.id] = p);
           } catch {}
         }
@@ -151,7 +149,8 @@ export class LeaderboardComponent implements OnInit {
           display_name: rpcNames[id] || profilesMap[id]?.full_name || profilesMap[id]?.username || (usersMap[id]?.user_metadata && (usersMap[id].user_metadata.name || usersMap[id].user_metadata.full_name)) || usersMap[id]?.email || id,
           points: byUser[id].points,
           challenge_id: undefined,
-          challenge_title: 'All Challenges'
+          challenge_title: 'All Challenges',
+          avatarUrl: profilesMap[id]?.avatar_url || null
         })).sort((a,b) => (b.points||0) - (a.points||0));
       }
     } catch (e: any) {

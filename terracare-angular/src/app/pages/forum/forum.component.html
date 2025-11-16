@@ -6,7 +6,10 @@
     <mat-card-content>
       <div class="cp-top">
         <div class="avatar">
-          <span class="avatar-text">{{ userName ? (userName.charAt(0) | uppercase) : 'U' }}</span>
+          <img *ngIf="userAvatarUrl; else initialAvatar" [src]="userAvatarUrl" alt="avatar" />
+          <ng-template #initialAvatar>
+            <span class="avatar-text">{{ userName ? (userName.charAt(0) | uppercase) : 'U' }}</span>
+          </ng-template>
         </div>
         <mat-form-field class="draft-field" appearance="fill" style="flex:1;">
           <mat-label>What's on your mind, {{ userName || 'User' }}?</mat-label>

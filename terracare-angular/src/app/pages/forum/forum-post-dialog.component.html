@@ -63,7 +63,10 @@
   <div class="dialog-footer">
     <div class="composer-left">
       <div class="me-avatar">
-        <div class="me-initial">{{ userDisplayName ? userDisplayName.charAt(0) : 'U' }}</div>
+        <img *ngIf="userAvatarUrl; else meInitial" [src]="userAvatarUrl" alt="you" />
+        <ng-template #meInitial>
+          <div class="me-initial">{{ userDisplayName ? userDisplayName.charAt(0) : 'U' }}</div>
+        </ng-template>
       </div>
     </div>
     <div class="composer-center">
