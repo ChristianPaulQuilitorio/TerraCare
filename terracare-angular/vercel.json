@@ -5,13 +5,16 @@
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist/terracare-angular",
-        "buildCommand": "npm run build"
+        "distDir": "dist/terracare-angular/browser",
+        "buildCommand": "npm run vercel-build"
       }
     }
   ],
   "routes": [
-    
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
     {
       "src": "/(.*)",
       "dest": "/index.html"
