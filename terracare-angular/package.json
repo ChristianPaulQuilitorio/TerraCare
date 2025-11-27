@@ -29,7 +29,7 @@
     "build:dev": "cross-env NODE_NO_WARNINGS=1 ng build --configuration development",
     "build:ci": "cross-env NODE_NO_WARNINGS=1 ng build --configuration production",
     "vercel-build": "npm run build:ci && npm run bundle:server",
-    "bundle:server": "node scripts/bundle-server.js",
+    "bundle:server": "node scripts/bundle-server.js && echo '\n[vercel-bundle-debug] api folder listing:' && node -e \"try{const fs=require('fs'); (fs.readdirSync('api')||[]).forEach(f=>console.log(f));}catch(e){console.error('[vercel-bundle-debug] error listing api:', e.message)}\" || true",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "eslint . --ext .ts,.html --max-warnings=0",
