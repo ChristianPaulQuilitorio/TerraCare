@@ -5,7 +5,7 @@
         <h1 class="desktop-title" *ngIf="!isHandset">Knowledge Hub</h1>
         <p class="subtitle">Explore articles, videos, guides, and infographics on sustainability.</p>
         <div class="header-actions">
-          <button mat-stroked-button color="primary" (click)="showUploadForm = !showUploadForm">{{ showUploadForm ? 'Cancel Upload' : 'Add Resource' }}</button>
+          <button mat-stroked-button color="primary" (click)="openUploadDialog()">Add Resource</button>
         </div>
       </header>
 
@@ -31,44 +31,6 @@
             <mat-chip-option (click)="setFilter('Biodiversity')" [selected]="activeFilter==='Biodiversity'">Biodiversity</mat-chip-option>
           </mat-chip-listbox>
         </div>
-      </section>
-      <section *ngIf="showUploadForm" class="upload-mat">
-        <mat-card class="upload-card">
-          <h2 mat-card-title>Upload Resource</h2>
-          <mat-card-content>
-            <form (submit)="$event.preventDefault(); submitUpload()" class="upload-form" novalidate>
-              <mat-form-field appearance="fill">
-                <mat-label>Title</mat-label>
-                <input matInput [value]="uploadTitle" (input)="uploadTitle = $any($event.target).value" required />
-              </mat-form-field>
-              <mat-form-field appearance="fill">
-                <mat-label>Description</mat-label>
-                <textarea matInput rows="3" (input)="uploadDescription = $any($event.target).value">{{ uploadDescription }}</textarea>
-              </mat-form-field>
-              <mat-form-field appearance="fill">
-                <mat-label>Category</mat-label>
-                <mat-select [value]="uploadCategory" (selectionChange)="uploadCategory = $any($event.value)">
-                  <mat-option value="Articles">Articles</mat-option>
-                  <mat-option value="Videos">Videos</mat-option>
-                  <mat-option value="Guides">Guides</mat-option>
-                  <mat-option value="Infographics">Infographics</mat-option>
-                </mat-select>
-              </mat-form-field>
-              <div class="file-row">
-                <input type="file" accept="image/*,video/*,application/pdf" (change)="onFileSelected($event)" />
-                <span class="muted" *ngIf="selectedFile">{{ selectedFile.name }}</span>
-              </div>
-              <div class="actions-row">
-                <button mat-raised-button color="primary" type="button" (click)="submitUpload()" [disabled]="uploadLoading || !uploadTitle">{{ uploadLoading ? 'Uploading…' : 'Publish' }}</button>
-                <button mat-button type="button" (click)="resetUploadForm()" [disabled]="uploadLoading">Reset</button>
-              </div>
-              <mat-error *ngIf="uploadError">{{ uploadError }}</mat-error>
-            </form>
-            <div class="preview" *ngIf="previewUrl">
-              <img [src]="previewUrl" alt="preview" />
-            </div>
-          </mat-card-content>
-        </mat-card>
       </section>
       <section class="kc-grid">
         <p class="muted" *ngIf="activeFilter !== 'All'" style="margin:4px 0 8px; text-align:center;">Filter "{{ activeFilter }}" is active — newly published items might be hidden if they don't match.</p>

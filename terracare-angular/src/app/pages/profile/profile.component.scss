@@ -1,7 +1,7 @@
 .profile-container {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 2.25rem;
   min-height: 100vh;
 }
 
@@ -78,25 +78,27 @@
 }
 
 .profile-header {
-  background: linear-gradient(135deg, #4caf50, #2e7d32);
+  background: linear-gradient(135deg, rgba(46,125,50,0.95), rgba(31,94,36,0.95));
   color: white;
   padding: 3rem 2rem;
-  border-radius: 16px;
-  margin-bottom: 2rem;
+  border-radius: 14px;
+  margin-bottom: 1.75rem;
   text-align: center;
 
   .avatar {
-    width: 88px;
-    height: 88px;
-    background: rgba(255, 255, 255, 0.2);
+    width: 96px;
+    height: 96px;
+    background: rgba(255, 255, 255, 0.14);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    
+    box-shadow: 0 8px 20px rgba(6,24,44,0.12);
+
     .avatar-text {
-      font-size: 2rem;
-      font-weight: 600;
+      font-size: 2.15rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
     }
   }
 
@@ -105,7 +107,7 @@
     margin: 0 auto;
     display: grid;
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 14px;
     align-items: center;
     justify-items: center;
   }
@@ -113,23 +115,29 @@
   .header-info {
     flex: 1;
     min-width: 250px;
-    
+
     h1 {
       margin: 0 0 0.5rem 0;
-      font-size: clamp(1.6rem, 3vw, 2rem);
-      font-weight: 600;
+      font-size: clamp(1.8rem, 3.4vw, 2.25rem);
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      color: #fff;
+      text-shadow: 0 6px 18px rgba(0,0,0,0.34);
     }
-    
+
     .user-email {
       margin: 0 0 0.25rem 0;
-      opacity: 0.9;
-      font-size: 1.1rem;
+      opacity: 0.95;
+      font-size: 1.05rem;
+      font-weight: 500;
     }
-    
+
     .member-since {
       margin: 0;
-      opacity: 0.8;
-      font-size: 0.9rem;
+      opacity: 0.9;
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.92);
+      text-shadow: 0 3px 8px rgba(0,0,0,0.28);
     }
   }
 
@@ -138,27 +146,20 @@
     flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    .mat-mdc-button-base { min-width: 200px; }
+    gap: 12px;
+    .mat-mdc-button-base { min-width: 180px; }
   }
 
   .change-photo-btn {
     background: #ffffff;
-    color: #2e7d32;
+    color: #1f5e24;
     border: none;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    font-weight: 700;
+    box-shadow: 0 6px 18px rgba(6,24,44,0.08);
   }
   .change-photo-btn:hover { filter: brightness(0.98); }
 
-  .edit-btn {
-    background: #ffffff;
-    color: #2e7d32;
-    border: none;
-    font-weight: 600;
-    box-shadow: 0 2px 6px rgba(0,0,0,.2);
-  }
-  .edit-btn:hover { filter: brightness(0.98); }
+  .edit-btn { display: none; }
 }
 
 .tile-center {

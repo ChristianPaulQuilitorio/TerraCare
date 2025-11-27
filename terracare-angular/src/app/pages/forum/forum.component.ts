@@ -190,6 +190,11 @@ export class ForumComponent implements OnInit {
 
   async toggleHeart(p: ForumPost) {
     if (!this.isLoggedIn) { this.errorMsg = 'Login to react.'; return; }
+    // Prevent users from hearting their own posts
+    if (this.userId && p.author_id && this.userId === p.author_id) {
+      this.toast.show("You can't heart your own post.", 'info');
+      return;
+    }
     const prevReacted = !!p.viewer_has_hearted;
     const prevCount = p.hearts_count || 0;
     // Optimistic update

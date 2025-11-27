@@ -46,7 +46,7 @@
             </div>
             <div class="comment-body">{{ comment.content }}</div>
             <div class="comment-actions">
-              <button mat-icon-button (click)="toggleCommentHeart(comment)" [color]="comment.viewer_has_hearted ? 'warn' : undefined"><mat-icon>{{ comment.viewer_has_hearted ? 'favorite' : 'favorite_border' }}</mat-icon></button>
+              <button mat-icon-button (click)="toggleCommentHeart(comment)" [disabled]="!isLoggedIn || userId === comment.user_id" [color]="comment.viewer_has_hearted ? 'warn' : undefined" matTooltip="You can't heart your own comment"><mat-icon>{{ comment.viewer_has_hearted ? 'favorite' : 'favorite_border' }}</mat-icon></button>
               <span class="action-count">{{ comment.hearts_count || 0 }}</span>
               <button mat-button color="warn" *ngIf="comment.can_delete" (click)="confirmDelete(comment, null)">Delete</button>
             </div>

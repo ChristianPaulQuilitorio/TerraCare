@@ -24,16 +24,12 @@
           <p class="member-since">Member since {{ formatDate(user.createdAt) }}</p>
         </div>
         <div class="header-actions">
-          <button *ngIf="!editing" mat-raised-button color="primary" class="edit-btn" (click)="startEditing()">
-            <mat-icon>edit</mat-icon>
-            Edit Profile
-          </button>
           <button mat-raised-button class="change-photo-btn" (click)="fileInput.click()" [disabled]="avatarUploading">
             <mat-icon>photo_camera</mat-icon>
             <span>{{ avatarUploading ? 'Uploading...' : 'Change Photo' }}</span>
           </button>
           <input #fileInput type="file" accept="image/*" (change)="onAvatarFileSelected($event)" style="display:none;" [disabled]="avatarUploading" />
-          <button mat-stroked-button color="warn" class="remove-btn" (click)="removeAvatar()" [disabled]="avatarUploading || !avatarUrl">
+          <button mat-stroked-button color="warn" class="remove-btn" (click)="removeAvatar()" [disabled]="avatarUploading">
             <mat-icon>delete</mat-icon>
             Remove Photo
           </button>
@@ -62,10 +58,7 @@
                 <label>Email Address</label>
                 <span>{{ user.email }}</span>
               </div>
-              <div class="info-item">
-                <label>User ID</label>
-                <span class="user-id">{{ user.id }}</span>
-              </div>
+              
             </div>
 
             <!-- Edit Mode -->

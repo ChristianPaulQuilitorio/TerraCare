@@ -1,15 +1,21 @@
 import { Component, ViewEncapsulation, OnInit, OnDestroy } from '@angular/core';
+// Date adapter for Chart.js time scale
+import 'chartjs-adapter-date-fns';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { ActiveChallengesService } from '../../core/services/active-challenges.service';
+import { InsightsService } from '../../core/services/insights.service';
+import { SiteConfigService } from '../../core/services/site-config.service';
 import { MATERIAL_IMPORTS } from '../../shared/ui/material.imports';
+import { PlantingsMapComponent } from '../../shared/ui/plantings-map.component';
+import { HttpClient } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, CommonModule, ...MATERIAL_IMPORTS],
+  imports: [RouterLink, CommonModule, ...MATERIAL_IMPORTS, PlantingsMapComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -30,18 +36,137 @@ export class DashboardComponent implements OnInit, OnDestroy {
   impactScore = 0; // current user's total points across all challenges
 
   loading = false;
+  // Environmental metrics
+  treesPlanted = 0;
+  treesPlantedSource: string | null = null;
+  wildlifeSpecies: string[] = [];
+  wildlifeLastUpdated: string | null = null;
+  speciesCounts: Array<{ name: string; count: number }> = [];
+  private wildlifePollTimer: any = null;
+  // Chart.js instance
+  private plantingsChart: any = null;
 
   constructor(
     private supabase: SupabaseService,
     private router: Router,
     private activeChallengesService: ActiveChallengesService
+    , private insightsService: InsightsService
+    , private siteConfig: SiteConfigService
+    , private http: HttpClient
   ) {}
 
   async ngOnInit() {
     await this.loadDashboard();
+    // Start lightweight polling for wildlife updates (every 60s)
+    this.wildlifePollTimer = setInterval(() => this.refreshWildlife(), 60 * 1000);
   }
 
-  ngOnDestroy() {}
+  // Fetch timeseries from server and render Chart.js bar chart into canvas
+  private async loadPlantingsTimeseriesAndRender() {
+    try {
+      const resp: any = await this.http.get('/api/metrics/plantings-timeseries').toPromise().catch(() => null);
+      const series = (resp && resp.series) || [];
+      // Ensure we render a full 12-month series (last 12 months) even if server returns sparse data.
+      const now = new Date();
+      const months: Date[] = [];
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push(d);
+      }
+
+      // Build a lookup from server series keyed by YYYY-MM to counts
+      const lookup: Record<string, number> = {};
+      for (const s of series) {
+        const month = String(s.month || '');
+        const key = month.length === 7 ? month : (month.slice(0,7) || '');
+        if (key) lookup[key] = Number(s.count || 0);
+      }
+
+      const dataPoints = months.map(d => {
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        return { x: d, y: lookup[key] || 0 };
+      });
+
+      // Dynamic load Chart.js
+      try {
+        const ChartModule = await import('chart.js/auto');
+        const Chart = ChartModule.default || ChartModule;
+        const canvas: HTMLCanvasElement | null = document.querySelector('#plantingsChartCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
+        if (this.plantingsChart && this.plantingsChart.destroy) this.plantingsChart.destroy();
+        // create a vertical gradient for the fill
+        const gradient = ctx.createLinearGradient(0, 0, 0, (canvas as HTMLCanvasElement).height || 150);
+        gradient.addColorStop(0, 'rgba(40,167,69,0.22)');
+        gradient.addColorStop(0.6, 'rgba(40,167,69,0.12)');
+        gradient.addColorStop(1, 'rgba(40,167,69,0.04)');
+
+        // eslint-disable-next-line no-unused-vars
+        this.plantingsChart = new Chart(ctx, {
+          type: 'line',
+          data: {
+            datasets: [{
+              label: 'Plantings',
+              data: dataPoints,
+              parsing: false,
+              fill: true,
+              backgroundColor: gradient,
+              borderColor: 'rgba(40,167,69,1)',
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              tension: 0.25
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                enabled: true,
+                backgroundColor: 'rgba(22,28,23,0.92)',
+                titleColor: '#e8f5e9',
+                bodyColor: '#fff',
+                padding: 10,
+                displayColors: false,
+                cornerRadius: 8,
+                boxPadding: 6,
+                callbacks: {
+                  title: (items: any[]) => {
+                    if (!items || !items.length) return '';
+                    const d = items[0].parsed && items[0].parsed.x ? new Date(items[0].parsed.x) : (items[0].parsed && items[0].parsed.t ? new Date(items[0].parsed.t) : null);
+                    if (!d) return '';
+                    return d.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+                  },
+                  label: (ctx: any) => {
+                    const v = ctx.parsed && typeof ctx.parsed.y !== 'undefined' ? ctx.parsed.y : ctx.raw && ctx.raw.y ? ctx.raw.y : ctx.raw;
+                    return `Plantings: ${Number(v || 0).toLocaleString()}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              x: {
+                type: 'time',
+                time: { unit: 'month', tooltipFormat: 'MMM yyyy', displayFormats: { month: 'MMM yyyy' } },
+                ticks: { autoSkip: true, maxRotation: 0 },
+                grid: { color: 'rgba(0,0,0,0.06)', drawBorder: false },
+                min: months[0],
+                max: months[months.length-1]
+              },
+              y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: 'rgba(0,0,0,0.04)', drawBorder: false } }
+            }
+          }
+        });
+      } catch (e) {
+        // Chart.js not installed — silently skip
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
 
   async loadDashboard() {
     this.loading = true;
@@ -156,6 +281,38 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // active challenges are loaded via ActiveChallengesService (subscriptions above)
 
+      // Try to fetch trees planted metric and local wildlife insights
+      try {
+        const trees = await this.insightsService.getTreesPlanted();
+        if (trees && typeof trees.count === 'number') {
+          this.treesPlanted = trees.count;
+          this.treesPlantedSource = (trees as any).source || null;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // Seed wildlife insights using a configured default location (if available)
+      try {
+        const cfg = this.siteConfig.localInsights;
+        const firstKey = Object.keys(cfg)[0];
+        if (firstKey) {
+          const loc = (cfg as any)[firstKey];
+          if (loc && typeof loc.lat === 'number' && typeof loc.lng === 'number') {
+            const ins = await this.insightsService.getInsights(loc.lat, loc.lng);
+            if (ins) {
+              this.wildlifeSpecies = ins.speciesObserved || [];
+              this.wildlifeLastUpdated = ins.lastUpdated || null;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // Load time-series plantings and render chart
+      try {
+        await this.loadPlantingsTimeseriesAndRender();
+      } catch (e) {}
+
     } catch (err) {
       console.warn('Dashboard load failed, using fallbacks', err);
       // Fallback sample data
@@ -238,5 +395,50 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.router.navigate(['/challenges/progress']);
       }
     })();
+  }
+
+  // Periodic wildlife refresh
+  private async refreshWildlife() {
+    try {
+      const cfg = this.siteConfig.localInsights;
+      const firstKey = Object.keys(cfg)[0];
+      if (!firstKey) return;
+      const loc = (cfg as any)[firstKey];
+      if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return;
+      const ins = await this.insightsService.getInsights(loc.lat, loc.lng);
+      if (ins) {
+        this.wildlifeSpecies = ins.speciesObserved || [];
+        this.wildlifeLastUpdated = ins.lastUpdated || null;
+        this.computeSpeciesCounts();
+        this.computeSpeciesCounts();
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+
+  private computeSpeciesCounts() {
+    const agg: Record<string, number> = {};
+    for (const s of (this.wildlifeSpecies || [])) {
+      const k = String(s || 'Unknown');
+      agg[k] = (agg[k] || 0) + 1;
+    }
+    const arr = Object.entries(agg).map(([name, count]) => ({ name, count }));
+    // sort descending
+    arr.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+    this.speciesCounts = arr.slice(0, 10);
+  }
+
+  widthPercent(count: number) {
+    if (!this.speciesCounts || !this.speciesCounts.length) return 10;
+    const max = this.speciesCounts[0].count || 1;
+    return Math.min(100, Math.max(2, (count / max) * 100));
+  }
+
+  ngOnDestroy() {
+    if (this.wildlifePollTimer) {
+      clearInterval(this.wildlifePollTimer);
+      this.wildlifePollTimer = null;
+    }
   }
 }

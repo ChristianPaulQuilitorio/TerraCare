@@ -410,6 +410,12 @@ export class PostService {
   async toggleCommentHeart(commentId: string, currentlyReacted: boolean): Promise<{ success: boolean; reacted?: boolean; count?: number; error?: string }> {
     const user = await this.auth.getCurrentUser();
     if (!user) return { success: false, error: 'Not logged in' };
+    // Prevent reacting to own comment
+    try {
+      const { data: commentRow } = await this.supabase.client.from('post_comments').select('user_id').eq('id', commentId).single();
+      const ownerId = (commentRow as any)?.user_id ?? null;
+      if (ownerId && ownerId === user.id) return { success: false, error: 'Cannot react to your own comment' };
+    } catch { /* ignore lookup errors and proceed */ }
     if (currentlyReacted) {
       const { error } = await this.supabase.client
         .from('comment_reactions')
@@ -475,6 +481,12 @@ export class PostService {
   async toggleHeart(postId: string, currentlyReacted: boolean): Promise<{ success: boolean; reacted?: boolean; count?: number; error?: string }> {
     const user = await this.auth.getCurrentUser();
     if (!user) return { success: false, error: 'Not logged in' };
+    // Prevent reacting to own post
+    try {
+      const { data: postRow } = await this.supabase.client.from('posts').select('author_id').eq('id', postId).single();
+      const authorId = (postRow as any)?.author_id ?? null;
+      if (authorId && authorId === user.id) return { success: false, error: 'Cannot react to your own post' };
+    } catch { /* ignore lookup errors and proceed */ }
     if (currentlyReacted) {
       const { error } = await this.supabase.client
         .from('post_reactions')

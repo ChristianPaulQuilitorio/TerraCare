@@ -7,6 +7,8 @@ export interface ProfileRecord {
   username: string | null;
   full_name: string | null;
   avatar_url: string | null;
+  phone?: string | null;
+  address?: string | null;
   created_at: string;
 }
 
@@ -24,7 +26,7 @@ export class ProfileService {
     try {
       const res = await supa
         .from('profiles')
-        .select('id, user_id, username, full_name, avatar_url, created_at')
+        .select('id, user_id, username, full_name, avatar_url, phone, address, created_at')
         .or(`id.eq.${user.id},user_id.eq.${user.id}`)
         .limit(1);
       const row = Array.isArray(res.data) && res.data.length ? res.data[0] : null;
@@ -33,28 +35,32 @@ export class ProfileService {
         username: row.username ?? null,
         full_name: row.full_name ?? null,
         avatar_url: row.avatar_url ?? null,
+        phone: row.phone ?? null,
+        address: row.address ?? null,
         created_at: row.created_at ?? new Date().toISOString()
       } as ProfileRecord;
     } catch {}
     // Fallback attempts
     try {
-      const a = await supa.from('profiles').select('id, username, full_name, avatar_url, created_at').eq('id', user.id).single();
+      const a = await supa.from('profiles').select('id, username, full_name, avatar_url, phone, address, created_at').eq('id', user.id).single();
       if (!a.error && a.data) return a.data as ProfileRecord;
     } catch {}
     try {
-      const b = await supa.from('profiles').select('user_id, username, full_name, avatar_url, created_at').eq('user_id', user.id).single();
+      const b = await supa.from('profiles').select('user_id, username, full_name, avatar_url, phone, address, created_at').eq('user_id', user.id).single();
       if (!b.error && b.data) return {
         id: b.data.user_id,
         username: b.data.username,
         full_name: b.data.full_name,
         avatar_url: b.data.avatar_url,
+        phone: b.data.phone ?? null,
+        address: b.data.address ?? null,
         created_at: b.data.created_at
       } as ProfileRecord;
     } catch {}
     return null;
   }
 
-  async upsertMyProfile(values: Partial<Pick<ProfileRecord, 'username' | 'full_name' | 'avatar_url'>>): Promise<{ success: boolean; error?: string }>{
+  async upsertMyProfile(values: Partial<Pick<ProfileRecord, 'username' | 'full_name' | 'avatar_url' | 'phone' | 'address'>>): Promise<{ success: boolean; error?: string }>{
     const user = await this.auth.getCurrentUser();
     if (!user) return { success: false, error: 'Not logged in' };
 
@@ -111,6 +117,36 @@ export class ProfileService {
       }
     }
     return { success: false, error: 'Failed to save profile: schema mismatch' };
+  }
+
+  /**
+   * Check whether a full_name is already used by another profile (case-insensitive best-effort).
+   */
+  async isFullNameTaken(fullName: string): Promise<boolean> {
+    if (!fullName) return false;
+    const supa = this.supabase.client;
+    try {
+      // First, try checking the auth `users` table's metadata where available
+      // Many Supabase projects expose `auth.users` as `users` to the client; attempt ilike on JSON metadata
+      try {
+        const u = await supa.from('users').select('id, user_metadata').filter("user_metadata->>full_name", 'ilike', fullName).limit(1);
+        if (!u.error && Array.isArray(u.data) && u.data.length) return true;
+      } catch (e) {
+        // ignore and fall through to profiles check
+      }
+
+      // Try case-insensitive match using ILIKE on profiles.full_name
+      const pattern = fullName;
+      const res = await supa.from('profiles').select('id, full_name').ilike('full_name', pattern).limit(1);
+      if (!res.error && Array.isArray(res.data) && res.data.length) return true;
+    } catch (e) {
+      // ignore and try fallback
+    }
+    try {
+      const r2 = await supa.from('profiles').select('id').eq('full_name', fullName).limit(1);
+      if (!r2.error && Array.isArray(r2.data) && r2.data.length) return true;
+    } catch (e) {}
+    return false;
   }
 
   /**

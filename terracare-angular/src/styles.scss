@@ -1,15 +1,34 @@
 /* Angular Material custom TerraCare theme */
 @use './theme/terracare-theme';
 
-/* Bootstrap */
+/* Bootstrap (kept for utility classes) */
 @import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 
-/* You can add global styles to this file, and also import other style files */
+/* Preferred UI font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
 
 :root {
 	--container-max: 1200px;
 	--brand-green: #2E7D32;
+	--brand-green-dark: #1f5e24;
+	--brand-accent: #ffb300; /* amber */
+	--brand-accent-hover: #e6a300;
 	--muted: #6b7a6b;
+	--bg: #f6f8f7;
+	--surface: #ffffff;
+	--radius: 12px;
+	--base-font: 16px;
+
+	/* Typography tokens */
+	--font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+	--mono-font: 'Courier New', 'Roboto Mono', monospace;
+	--text-color: #21332a; /* slightly warm dark color for readability */
+	--h1-size: 2.25rem; /* 36px */
+	--h2-size: 1.75rem; /* 28px */
+	--h3-size: 1.25rem; /* 20px */
+	--lead-size: 1.125rem;
+	--strong-weight: 700;
+	--muted-color: #6b7a6b;
 }
 
 * { box-sizing: border-box; }
@@ -24,27 +43,46 @@ html, body { height: 100%; }
 
 body {
 	margin: 0;
-	font-family: "Segoe UI", Arial, sans-serif;
+	font-family: var(--font-family);
+	font-size: var(--base-font);
 	line-height: 1.6;
-	background: #f8f9f9;
-	color: #333;
+	background: var(--bg);
+	color: var(--text-color);
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
 }
 
-/* TerraCare buttons (global utility) */
+/* Headings: clearer hierarchy and consistent spacing */
+h1, h2, h3, h4 {
+	font-family: var(--font-family);
+	color: var(--brand-green-dark);
+	margin-top: 0;
+	margin-bottom: 0.75rem;
+	font-weight: var(--strong-weight);
+}
+h1 { font-size: var(--h1-size); }
+h2 { font-size: var(--h2-size); }
+h3 { font-size: var(--h3-size); }
+h4 { font-size: 1rem; }
+
+/* Lead paragraph / hero text */
+.lead { font-size: var(--lead-size); color: rgba(33,51,42,0.9); }
+
+/* Buttons: subtler, larger touch targets */
 .tc-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	padding: 8px 14px;
-	border-radius: 8px;
+	padding: 10px 16px;
+	border-radius: var(--radius);
 	text-decoration: none;
 	font-weight: 600;
 	line-height: 1;
 	border: none;
 }
-.tc-primary { background: #2E7D32; color: #fff !important; }
-.tc-primary:hover { background: #256628; color: #fff !important; }
-.tc-outline { border: 2px solid #2E7D32; color: #2E7D32 !important; background: transparent; }
+.tc-primary { background: var(--brand-green); color: #fff !important; }
+.tc-primary:hover { background: var(--brand-green-dark); color: #fff !important; }
+.tc-outline { border: 2px solid var(--brand-green); color: var(--brand-green) !important; background: transparent; }
 .tc-outline:hover { background: #E8F5E9; }
 
 /* Apply TerraCare color to Material buttons when class is present */
@@ -52,19 +90,19 @@ body {
 .mat-mdc-unelevated-button.tc-primary,
 .mat-mdc-fab.tc-primary,
 .mat-mdc-mini-fab.tc-primary {
-	--mdc-filled-button-container-color: #2E7D32;
+	--mdc-filled-button-container-color: var(--brand-green);
 	--mdc-filled-button-label-text-color: #fff;
 }
 .mat-mdc-stroked-button.tc-outline,
 .mat-mdc-outlined-button.tc-outline {
-	--mdc-outlined-button-outline-color: #2E7D32;
-	--mdc-outlined-button-label-text-color: #2E7D32;
+	--mdc-outlined-button-outline-color: var(--brand-green);
+	--mdc-outlined-button-label-text-color: var(--brand-green);
 }
 
 /* Stronger fallback to ensure TerraCare green on Material raised buttons */
 button.mat-mdc-raised-button.tc-primary,
 button.mat-mdc-unelevated-button.tc-primary {
-	background-color: #2E7D32 !important;
+	background-color: var(--brand-green) !important;
 	color: #fff !important;
 }
 
@@ -93,17 +131,70 @@ img { max-width: 100%; height: auto; display: block; }
 /* Small utilities for touch targets */
 .touch-large { padding: 12px 16px; border-radius: 8px; }
 
+/* Plantings map global helpers (responsive) */
+.plantings-map-root { width: 100%; }
+.plantings-map-root .plantings-controls { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
+.plantings-map-root .plantings-controls label { font-size: 0.95rem; }
+.plantings-map-root .map-container { height: 420px; width: 100%; border-radius: 8px; }
+
+@media (max-width: 768px) {
+	.plantings-map-root .map-container { height: 340px; }
+	.plantings-map-root .plantings-controls select, .plantings-map-root .plantings-controls input[type="checkbox"] { transform: scale(1.02); }
+}
+
+@media (max-width: 480px) {
+	.plantings-map-root .map-container { height: 260px; }
+	.plantings-map-root .plantings-controls { gap:6px; }
+	.plantings-map-root .plantings-controls label { font-size: 0.92rem; }
+	.plantings-map-root .plantings-controls select { min-width: 160px; }
+}
+
 /* Auth dialog polish */
 .auth-backdrop { background: rgba(0,0,0,.45) !important; backdrop-filter: blur(2px); }
 .auth-dialog .mat-mdc-dialog-surface {
 	border-radius: 16px !important;
-	box-shadow: 0 18px 56px rgba(0,0,0,.24) !important;
+	box-shadow: 0 18px 56px rgba(0,0,0,.12) !important;
 }
 
-/* Make links inside auth dialogs use brand green */
-.auth-dialog a { color: var(--brand-green); }
+/* Make links use brand accent for better contrast */
+.auth-dialog a, a { color: var(--brand-accent); text-decoration: underline; }
+a:hover { color: var(--brand-accent-hover); }
 
-/* Accessibility helpers applied via body classes */
+/* Muted text utility */
+.muted { color: var(--muted-color); }
+
+/* Inline code / monospace */
+code, kbd, pre { font-family: var(--mono-font); background: #f3f4f3; padding: 0.12rem 0.32rem; border-radius: 6px; font-size: 0.92rem; }
+
+/* High contrast utility for hero text or overlays */
+.tc-contrast-text { color: #fff !important; text-shadow: 0 3px 12px rgba(0,0,0,0.45); }
+
+/* Text outline utility: white border/stroke for text over images
+	 Uses -webkit-text-stroke where available and a subtle multi-layer shadow fallback. */
+.tc-text-outline-white {
+	color: var(--brand-green-dark); /* default fill color; can be overridden */
+	-webkit-text-stroke: 1.5px rgba(255,255,255,0.95);
+	text-stroke: 1.5px rgba(255,255,255,0.95); /* non-standard but harmless */
+	text-shadow:
+		0 1px 0 rgba(255,255,255,0.95),
+		0 2px 6px rgba(0,0,0,0.45);
+}
+
+/* Hero title helper: large, bold, outlined text suitable for banners over images */
+.hero-title {
+	font-size: clamp(1.8rem, 6vw, 3.2rem);
+	line-height: 1.05;
+	font-weight: 800;
+	letter-spacing: -0.6px;
+	color: #ffffff; /* default to white for most heroes */
+	-webkit-text-stroke: 0.6px rgba(0,0,0,0.45);
+	text-shadow: 0 6px 18px rgba(0,0,0,0.45);
+}
+
+/* Buttons: tweak sizes for readability */
+.tc-btn { font-size: 0.98rem; padding: 10px 16px; }
+
+/* Accessibility helpers applied via body classes (kept) */
 body.tc-large-font { font-size: 18px; }
 body.tc-high-contrast {
 	background: #fff !important;
@@ -132,9 +223,9 @@ body.tc-reduce-motion *, body.tc-reduce-motion *::before, body.tc-reduce-motion 
 }
 .tc-tour-tooltip {
 	max-width: 360px;
-	background: #fff;
+	background: var(--surface);
 	border-radius: 10px;
-	box-shadow: 0 22px 60px rgba(6, 24, 44, 0.32);
+	box-shadow: 0 22px 60px rgba(6, 24, 44, 0.12);
 	padding: 12px 14px;
 	color: #111;
 	font-size: 14px;
@@ -144,38 +235,39 @@ body.tc-reduce-motion *, body.tc-reduce-motion *::before, body.tc-reduce-motion 
 }
 .tc-tour-tooltip h3 { margin: 0 0 6px 0; font-size:16px; }
 .tc-tour-tooltip .actions { display:flex; gap:8px; justify-content:flex-end; margin-top:10px; }
-.tc-tour-tooltip .actions button { background:#2E7D32; color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
+.tc-tour-tooltip .actions button { background:var(--brand-green); color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; }
 .tc-tour-tooltip .actions button:nth-child(1) { background:#e0e0e0; color:#111; }
 .tc-tour-tooltip .actions button:nth-child(3) { background:#b00020; }
 
-/* Highlight class applied to focused element: use very large z-index and !important to override stacking contexts where possible */
+/* Highlight class applied to focused element */
 .tc-tour-highlight {
 	position: relative !important;
 	z-index: 22000 !important;
-	box-shadow: 0 0 0 6px rgba(46,125,50,0.18), 0 18px 48px rgba(0,0,0,0.28) !important;
+	box-shadow: 0 0 0 6px rgba(46,125,50,0.12), 0 18px 48px rgba(0,0,0,0.18) !important;
 	border-radius: 8px !important;
 	transition: box-shadow .28s ease, transform .18s ease;
 }
 
-/* Make the tour tooltip slightly smaller and more compact on narrow viewports
-	 so it doesn't overflow or crowd mobile screens. We use a max of viewport width
-	 minus small gutters and reduce padding/font-size for readability on small devices. */
 @media (max-width: 720px) {
-	.tc-tour-tooltip {
-		max-width: calc(100vw - 32px);
-		width: auto;
-		padding: 10px 10px;
-		font-size: 13px;
-		box-shadow: 0 12px 30px rgba(6,24,44,0.22);
-	}
+	.tc-tour-tooltip { max-width: calc(100vw - 32px); width: auto; padding: 10px 10px; font-size: 13px; box-shadow: 0 12px 30px rgba(6,24,44,0.12); }
 	.tc-tour-tooltip h3 { font-size: 15px; }
 	.tc-tour-tooltip .actions { gap:6px; }
 	.tc-tour-tooltip .actions button { padding:6px 8px; font-size:13px; }
 }
 
 /* Ensure tooltip and overlay are on top of fixed/sticky elements like navbars */
-header, .mat-toolbar, .navbar, .cdk-overlay-container {
-	z-index: auto;
-}
+header, .mat-toolbar, .navbar, .cdk-overlay-container { z-index: auto; }
+
+/* Snackbars shown with the 'snack-on-top' panel class should appear above dialogs/backdrops */
+.cdk-overlay-container .mat-snack-bar-container.snack-on-top { z-index: 30000 !important; filter: none !important; backdrop-filter: none !important; pointer-events: auto !important; }
+
+.cdk-overlay-container .cdk-global-overlay-wrapper .cdk-overlay-pane .mat-snack-bar-container.snack-on-top { z-index: 30000 !important; }
+
+/* Global card tweaks */
+.mat-card, .section { border-radius: var(--radius); background: var(--surface); }
+
+/* Utility to slightly increase heading prominence across the app */
+h1, h2, h3 { color: var(--brand-green-dark); }
+
 
 

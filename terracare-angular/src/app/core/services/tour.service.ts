@@ -24,7 +24,19 @@ export class TourService {
       route: '/dashboard',
       selector: '.dashboard-header h1',
       title: 'Dashboard — Track Progress',
-      text: 'Your Dashboard shows active challenges, resource counts, recent forum activity, and a leaderboard. Use the action buttons to create or join challenges, view detailed progress, and check your engagement at a glance.'
+      text: 'Your Dashboard shows active challenges, resource counts, recent forum activity, and a leaderboard. Use the action buttons to create or join challenges, view detailed progress, check wildlife activity feeds, and explore recent plantings on the map.'
+    },
+    {
+      route: '/scoreboard',
+      selector: '.scoreboard h2',
+      title: 'Sustainability Scoreboard',
+      text: 'View aggregated environmental indicators for your area: biodiversity observations, air quality (PM2.5), and a forest/land proxy. Use Refresh to fetch the latest data.'
+    },
+    {
+      route: '/incidents',
+      selector: '.incidents-page h2',
+      title: 'Incidents — Report and Monitor',
+      text: 'Report illegal logging, land degradation, or wildlife threats using the interactive map. Click the map to pick a location, add a description, and submit a report; recent reports appear below and may be reviewed or removed by moderators.'
     },
     {
       route: '/challenges',

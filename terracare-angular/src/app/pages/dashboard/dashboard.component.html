@@ -50,6 +50,28 @@
         </mat-card-content>
       </mat-card>
 
+      <mat-card class="environment">
+        <mat-card-header>
+          <mat-card-title>Environment — Analytics</mat-card-title>
+          <mat-card-subtitle>Real-time indicators</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="env-grid">
+            <div class="env-item">
+              <div class="label">Trees planted</div>
+              <div class="value">{{ treesPlanted | number }}</div>
+              <div class="muted small" *ngIf="treesPlantedSource">Source: {{ treesPlantedSource }}</div>
+            </div>
+            <div class="env-item">
+              <div class="label">Wildlife activity</div>
+              <div class="value">{{ wildlifeSpecies.length }} species</div>
+              <div class="muted small">{{ wildlifeSpecies.slice(0,4).join(', ') }}<span *ngIf="wildlifeSpecies.length>4">, …</span></div>
+              <div class="muted small" *ngIf="wildlifeLastUpdated">Updated: {{ wildlifeLastUpdated | date:'short' }}</div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
       <mat-card class="stretch">
         <mat-card-header>
           <mat-card-title>Engagement — Leaderboard</mat-card-title>
@@ -80,6 +102,42 @@
     </section>
 
     <section class="lower-row">
+      <mat-card class="map-card">
+        <mat-card-header>
+          <mat-card-title>Plantings Map — Philippines</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <app-plantings-map></app-plantings-map>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="species-chart">
+        <mat-card-header>
+          <mat-card-title>Wildlife — Species Observed</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="chart-legend" *ngIf="speciesCounts.length">
+            <div *ngFor="let s of speciesCounts" class="chart-row">
+              <div class="label">{{ s.name }}</div>
+              <div class="bar"><div class="bar-fill" [style.width.%]="widthPercent(s.count)"></div></div>
+              <div class="count">{{ s.count }}</div>
+            </div>
+          </div>
+          <div *ngIf="!speciesCounts.length" class="muted">No species data available.</div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="time-series">
+        <mat-card-header>
+          <mat-card-title>Plantings Over Time</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div style="height:220px; position: relative;">
+            <canvas id="plantingsChartCanvas"></canvas>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
       <mat-card class="recent-activity">
         <mat-card-header>
           <mat-card-title>Recent Activity (last 24h)</mat-card-title>

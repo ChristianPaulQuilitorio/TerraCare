@@ -3,10 +3,21 @@
 // Include the common Angular Material core styles.
 @include mat.core();
 
+// Typography: use a modern system font stack (Inter recommended)
+$tc-font-family: 'Inter, "Segoe UI", Arial, sans-serif';
+
 // Define brand palettes (Material theming API)
-$terracare-primary: mat.define-palette(mat.$green-palette, 700);
-$terracare-accent:  mat.define-palette(mat.$green-palette, A200);
+// Use a slightly softer primary tone (600) for better contrast balance
+$terracare-primary: mat.define-palette(mat.$green-palette, 600);
+// Use a warm accent to complement green (amber) for callouts
+$terracare-accent:  mat.define-palette(mat.$amber-palette, A400);
 $terracare-warn:    mat.define-palette(mat.$red-palette);
+
+// Define a typography config so Material components inherit our font & sizing
+// Note: keep a minimal config (font-family) to avoid compatibility issues
+$terracare-typography: mat.define-typography-config(
+  $font-family: $tc-font-family
+);
 
 // Create a light theme based on TerraCare green
 $terracare-theme: mat.define-light-theme((
@@ -15,8 +26,14 @@ $terracare-theme: mat.define-light-theme((
     accent: $terracare-accent,
     warn: $terracare-warn,
   ),
-  typography: mat.define-typography-config(),
+  typography: $terracare-typography,
 ));
 
 // Apply the theme to all Angular Material components
 @include mat.all-component-themes($terracare-theme);
+
+// Provide a small helper class for elevated cards to keep shadows consistent
+.tc-card-elevated {
+  box-shadow: 0 12px 36px rgba(6,24,44,0.14);
+  border-radius: 12px;
+}

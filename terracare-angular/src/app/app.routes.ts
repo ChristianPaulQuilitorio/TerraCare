@@ -63,6 +63,16 @@ export const routes: Routes = [
 		loadComponent: () => import('./pages/dashboard/dashboard.component').then(m => m.DashboardComponent),
 		canActivate: [AuthGuard]
 	},
+    {
+        path: 'scoreboard',
+        loadComponent: () => import('./pages/scoreboard/scoreboard.component').then(m => (m as any).default),
+        canActivate: [AuthGuard]
+    },
+	{ 
+		path: 'incidents',
+		loadComponent: () => import('./pages/incidents/incidents.component').then(m => m.IncidentsComponent),
+		canActivate: [AuthGuard]
+	},
 
 	{ 
 		path: 'profile', 

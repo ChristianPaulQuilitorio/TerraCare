@@ -93,6 +93,29 @@ export class KnowledgeService {
     return publicUrlData.publicUrl;
   }
 
+  /**
+   * Request a short-lived signed URL for a stored public URL or storage path.
+   * If a Supabase public URL is provided, the storage path will be extracted and used.
+   * Returns a signed URL suitable for embedding in a <video> or <a> tag.
+   */
+  async getSignedUrlForPublicUrl(publicUrl: string, expiresSec = 300): Promise<string | null> {
+    try {
+      const path = this.extractStoragePath(publicUrl);
+      if (!path) return publicUrl; // fallback to original if not in expected storage format
+      const params = new URLSearchParams({ bucket: 'knowledge-attachments', path, expires: String(Math.max(60, Math.min(3600, expiresSec))) });
+      const resp = await fetch(`/api/storage/signed-url?${params.toString()}`, { method: 'GET', credentials: 'include' });
+      if (!resp.ok) {
+        console.warn('Signed URL fetch failed', resp.status);
+        return publicUrl;
+      }
+      const body = await resp.json();
+      return body?.url || publicUrl;
+    } catch (e) {
+      console.warn('getSignedUrlForPublicUrl error', e);
+      return publicUrl;
+    }
+  }
+
   async createItem(item: { title: string; description: string; category?: string; url?: string; type?: string }) {
     try {
       const user = await this.auth.getCurrentUser();

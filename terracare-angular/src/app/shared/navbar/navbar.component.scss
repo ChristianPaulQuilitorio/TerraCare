@@ -51,6 +51,14 @@
   .navbar-actions { display: none; }
 }
 
+/* Smaller screens: make logo and buttons slightly larger/tappable and ensure menu is visible */
+@media (max-width: 480px) {
+  .navbar-logo .logo-img { width: 36px; height: 36px; }
+  .menu-button { width: 44px; height: 44px; border-radius: 8px; }
+  .navbar { padding: 8px 10px; }
+  .navbar-links { display: none; }
+}
+
 /* Ensure burger stays above content */
 .navbar { z-index: 4000; position: relative; }
 

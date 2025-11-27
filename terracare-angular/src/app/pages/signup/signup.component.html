@@ -27,6 +27,27 @@
       </mat-form-field>
       </div>
 
+      <div class="two-col">
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Phone (Philippines)</mat-label>
+        <mat-icon matPrefix>phone</mat-icon>
+        <input matInput id="phone" formControlName="phone" autocomplete="tel" placeholder="e.g. +639171234567 or 09171234567" required>
+        <mat-hint>Format: +63XXXXXXXXXX or 09XXXXXXXXX</mat-hint>
+        <mat-error *ngIf="form.get('phone')?.touched && form.get('phone')?.invalid">
+          Please enter a valid Philippine mobile number
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill" floatLabel="always">
+        <mat-label>Address</mat-label>
+        <mat-icon matPrefix>home</mat-icon>
+        <input matInput id="address" formControlName="address" autocomplete="street-address" placeholder="Your address" required>
+        <mat-error *ngIf="form.get('address')?.touched && form.get('address')?.invalid">
+          Please enter your address (min 5 characters)
+        </mat-error>
+      </mat-form-field>
+      </div>
+
       <mat-form-field appearance="fill" floatLabel="always">
         <mat-label>Password</mat-label>
         <mat-icon matPrefix>lock</mat-icon>
@@ -51,6 +72,12 @@
         </mat-error>
       </mat-form-field>
 
+      <div class="form-actions">
+        <button mat-raised-button color="primary" id="signupBtn" type="submit" [disabled]="submitting">
+          {{ submitting ? 'Creating account…' : 'Sign Up' }}
+        </button>
+      </div>
+
       <mat-checkbox formControlName="privacy">
         I agree to the <a href="#" (click)="$event.preventDefault(); openPrivacy()">Privacy Policy</a>
       </mat-checkbox>
@@ -58,18 +85,8 @@
         I agree to the <a href="#" (click)="$event.preventDefault(); openTerms()">Terms of Use</a>
       </mat-checkbox>
 
-      <button mat-raised-button color="primary" id="signupBtn" type="submit" [disabled]="submitting">
-        {{ submitting ? 'Creating account…' : 'Sign Up' }}
-      </button>
-
       <p *ngIf="message" class="auth-message">{{ message }}</p>
-      <div *ngIf="verificationSent" class="verification-box">
-        <p>A verification email has been sent to <strong>{{ verificationEmail }}</strong>. Please check your inbox and follow the link to verify your account.</p>
-        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-          <button mat-stroked-button class="tc-outline" (click)="resendVerification()" [disabled]="resendBusy">Resend verification email</button>
-          <button mat-raised-button class="tc-primary" (click)="checkVerification()" [disabled]="verificationCheckBusy">I've verified — go to Login</button>
-        </div>
-      </div>
+      <!-- verification box removed: verification flow handled via email and login -->
 
       <div class="footer-links">
         <span>Already have an account?</span>

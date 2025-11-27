@@ -1,13 +1,17 @@
 import { Component, ViewEncapsulation, OnInit, AfterViewInit, Inject, PLATFORM_ID, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HttpClientModule } from '@angular/common/http';
+import { InsightsService, NormalizedInsight } from '../../core/services/insights.service';
 import { MATERIAL_IMPORTS } from '../../shared/ui/material.imports';
 import { SupabaseService } from '../../core/services/supabase.service';
 import { AuthDialogService } from '../../shared/ui/auth-dialog.service';
+import { SiteConfigService } from '../../core/services/site-config.service';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
-  imports: [CommonModule, ...MATERIAL_IMPORTS],
+  imports: [CommonModule, ...MATERIAL_IMPORTS, FormsModule, HttpClientModule],
   template: `
     <header class="landing-header">
       <section class="hero" role="banner">
@@ -21,6 +25,49 @@ import { AuthDialogService } from '../../shared/ui/auth-dialog.service';
         </div>
       </section>
     </header>
+    <section class="local-insights container">
+      <h2>Local Insights — check your surroundings</h2>
+      <p class="muted">See quick ecosystem indicators for nearby areas to spark curiosity and awareness.</p>
+      <div class="insights-row">
+        <div class="insight-controls">
+          <label for="locationSelect">Location:</label>
+          <select id="locationSelect" [(ngModel)]="selectedLocation" (ngModelChange)="onLocationChange($event)">
+            <option *ngFor="let loc of locations" [value]="loc">{{ loc }}</option>
+          </select>
+          <button class="tc-btn small" type="button" (click)="refreshInsight()" [disabled]="insightLoading">Refresh</button>
+          <span class="insight-status">
+            <ng-container *ngIf="insightLoading">Loading…</ng-container>
+            <ng-container *ngIf="!insightLoading && insightsRaw">Server</ng-container>
+            <ng-container *ngIf="!insightLoading && !insightsRaw">Seed</ng-container>
+          </span>
+        </div>
+        <div class="insight-cards" *ngIf="currentInsight as ci">
+          <div class="card small">
+            <h3>Water Quality</h3>
+            <div class="stat">{{ ci.waterQualityIndex }} / 100</div>
+            <div class="muted">Last: {{ ci.lastUpdated }}</div>
+          </div>
+          <div class="card small">
+            <h3>Mangrove Cover</h3>
+            <div class="stat">{{ ci.mangroveCoverPct }}%</div>
+            <div class="muted">Coverage / recent change</div>
+          </div>
+          <div class="card small">
+            <h3>Beach Cleanliness</h3>
+            <div class="stat">{{ ci.beachCleanlinessRating }} / 5</div>
+            <div class="muted">Community rating</div>
+          </div>
+          <div class="card small notable-species">
+            <h3>Notable Species</h3>
+            <div class="stat">{{ ci.speciesObserved.join(', ') }}</div>
+          </div>
+          <div *ngIf="ci?.note" class="insight-note muted">Note: {{ ci.note }}</div>
+          
+          <div *ngIf="insightError" class="insight-error">Error: {{ insightError }}</div>
+        </div>
+      </div>
+      <div class="insight-cta"><button class="tc-btn" (click)="openSignup()">Explore local resources</button></div>
+    </section>
     <main>
       <section class="challenges container" aria-label="Ongoing Eco-Challenges">
         <h2>Ongoing Eco-Challenges</h2>
@@ -58,19 +105,65 @@ export class LandingComponent implements OnInit, AfterViewInit {
   carouselPaused = false;
   private resizeHandler?: () => void;
 
+  // Local insights
+  locations: string[] = [];
+  selectedLocation: string | null = null;
+  liveInsight: NormalizedInsight | null = null;
+  insightLoading = false;
+  insightsRaw: any = null;
+  insightError: string | null = null;
+
+
   @ViewChild('carouselWrapper', { static: false }) wrapperRef?: ElementRef<HTMLDivElement>;
   @ViewChild('carouselTrack', { static: false }) trackRef?: ElementRef<HTMLDivElement>;
 
-  constructor(private supabase: SupabaseService, @Inject(PLATFORM_ID) private platformId: Object, private authDialog: AuthDialogService) {}
+  constructor(private supabase: SupabaseService, @Inject(PLATFORM_ID) private platformId: Object, private authDialog: AuthDialogService, private siteConfig: SiteConfigService, private insights: InsightsService) {
+    // Initialize local locations from site config
+    this.locations = Object.keys(this.siteConfig.localInsights || {});
+    this.selectedLocation = this.locations.length ? this.locations[0] : null;
+  }
 
   async ngOnInit() {
     // Avoid hitting Supabase during server-side rendering to prevent slow or blocked requests
     if (isPlatformBrowser(this.platformId)) {
       await this.loadChallenges();
+      // fetch live insight for selected location
+      this.fetchLiveInsight();
     } else {
       this.loading = false;
     }
   }
+
+  async fetchLiveInsight() {
+    if (!this.selectedLocation) return;
+    const seed: any = (this.siteConfig.localInsights || {})[this.selectedLocation] || {};
+    const lat = seed.lat; const lng = seed.lng;
+    if (!lat || !lng) return;
+    try {
+      this.insightLoading = true;
+      // Fetch normalized view for UI
+      this.liveInsight = await this.insights.getInsights(lat, lng, seed);
+      // Also fetch raw server response for verification (contains fromCache flag)
+      this.insightsRaw = await this.insights.getInsightsRaw(lat, lng);
+      this.insightError = null;
+      try { if (isPlatformBrowser(this.platformId)) console.log('[landing] liveInsight', this.liveInsight, 'raw', this.insightsRaw); } catch (e) {}
+    } catch (e) {
+      console.warn('Failed to fetch live insights', e);
+      this.liveInsight = null;
+      this.insightsRaw = null;
+      this.insightError = String((e as any)?.message || e || 'unknown');
+    }
+    finally { this.insightLoading = false; }
+  }
+
+  onLocationChange(value: string | null) {
+    this.selectedLocation = value;
+    // fetch new insight when selection changes
+    this.fetchLiveInsight();
+  }
+
+  
+  refreshInsight() { this.fetchLiveInsight(); }
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       // Build once view is ready
@@ -153,4 +246,10 @@ export class LandingComponent implements OnInit, AfterViewInit {
 
   pauseCarousel() { this.carouselPaused = true; }
   resumeCarousel() { this.carouselPaused = false; }
+
+  get currentInsight() {
+    if (!this.selectedLocation) return null;
+    const seed: any = this.siteConfig.localInsights[this.selectedLocation] ?? null;
+    return this.liveInsight ?? seed;
+  }
 }

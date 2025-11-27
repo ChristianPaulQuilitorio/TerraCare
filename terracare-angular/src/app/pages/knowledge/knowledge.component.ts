@@ -181,6 +181,114 @@ export class KnowledgeComponent {
       }
     });
   }
+
+  openUploadDialog() {
+    const ref = this.dialog.open(UploadDialogComponent, {
+      width: '720px',
+      maxHeight: '80vh',
+      data: {},
+    });
+    ref.afterClosed().subscribe(async (res: any) => {
+      if (res && res.created) {
+        // Prepend the created item so user sees it immediately
+        this.items = [res.created as KnowledgeItem].concat(this.items || []);
+        this.activeFilter = 'All';
+        this.toast.show('Resource published', 'success');
+        setTimeout(() => window.scrollTo({ top: 0, behavior: 'smooth' }), 50);
+      }
+    });
+  }
+}
+
+@Component({
+  selector: 'app-upload-dialog',
+  standalone: true,
+  imports: [...MATERIAL_IMPORTS, CommonModule],
+  template: `
+    <h2 mat-dialog-title>Upload Resource</h2>
+    <mat-dialog-content>
+      <form (submit)="$event.preventDefault(); submit()" class="upload-form" novalidate>
+        <mat-form-field appearance="fill" style="width:100%;">
+          <mat-label>Title</mat-label>
+          <input matInput (input)="title = $any($event.target).value" required />
+        </mat-form-field>
+        <mat-form-field appearance="fill" style="width:100%;">
+          <mat-label>Description</mat-label>
+          <textarea matInput rows="3" (input)="description = $any($event.target).value"></textarea>
+        </mat-form-field>
+        <mat-form-field appearance="fill" style="width:100%;">
+          <mat-label>Category</mat-label>
+          <mat-select [value]="category" (selectionChange)="category = $any($event.value)">
+            <mat-option value="Articles">Articles</mat-option>
+            <mat-option value="Videos">Videos</mat-option>
+            <mat-option value="Guides">Guides</mat-option>
+            <mat-option value="Infographics">Infographics</mat-option>
+          </mat-select>
+        </mat-form-field>
+        <div style="display:flex;align-items:center;gap:12px;margin:8px 0;">
+          <input type="file" accept="image/*,video/*,application/pdf" (change)="onFileSelected($event)" />
+          <span class="muted" *ngIf="selectedFile">{{ selectedFile.name }}</span>
+        </div>
+        <div *ngIf="previewUrl" style="margin:8px 0;"><img [src]="previewUrl" alt="preview" style="max-width:100%; border-radius:8px;" /></div>
+        <mat-error *ngIf="error">{{ error }}</mat-error>
+      </form>
+    </mat-dialog-content>
+    <mat-dialog-actions align="end">
+      <button mat-button (click)="dialogRef.close()">Cancel</button>
+      <button mat-raised-button color="primary" (click)="submit()" [disabled]="loading || !title">{{ loading ? 'Uploading…' : 'Publish' }}</button>
+    </mat-dialog-actions>
+  `,
+})
+export class UploadDialogComponent {
+  title = '';
+  description = '';
+  category = 'Articles';
+  selectedFile: File | null = null;
+  previewUrl: string | null = null;
+  loading = false;
+  error: string | null = null;
+  constructor(public dialogRef: MatDialogRef<UploadDialogComponent>, private knowledge: KnowledgeService, private toast: ToastService) {}
+
+  onFileSelected(ev: Event) {
+    const input = ev.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    this.selectedFile = input.files[0];
+    this.error = null;
+    if (this.selectedFile.type.startsWith('image/')) {
+      this.previewUrl = URL.createObjectURL(this.selectedFile);
+    } else {
+      this.previewUrl = null;
+    }
+  }
+
+  async submit() {
+    if (!this.title) {
+      this.error = 'Please add a title.';
+      this.toast.show('Please add a title before publishing.', 'warning');
+      return;
+    }
+    this.loading = true;
+    this.error = null;
+    try {
+      let url: string | null = null;
+      if (this.selectedFile) {
+        url = await this.knowledge.uploadFileToStorage(this.selectedFile, 'knowledge');
+        if (!url) throw new Error('File upload failed');
+      }
+      const created = await this.knowledge.createItem({ title: this.title, description: this.description, category: this.category, url: url ?? undefined, type: this.selectedFile ? this.selectedFile.type : undefined });
+      if (created) {
+        this.dialogRef.close({ created });
+      } else {
+        this.error = 'Failed to create item.';
+        this.toast.show('Failed to create item.', 'error');
+      }
+    } catch (e: any) {
+      this.error = e?.message || 'Upload failed.';
+      this.toast.show(this.error || 'Upload failed.', 'error');
+    } finally {
+      this.loading = false;
+    }
+  }
 }
 
 @Component({
@@ -198,7 +306,13 @@ export class KnowledgeComponent {
       </ng-template>
       <p>{{ data.item.description }}</p>
       <div *ngIf="data.item.url && !data.item.type?.startsWith('image/')" style="margin-top:8px;">
-        <a [href]="data.item.url" target="_blank" rel="noopener">Open resource</a>
+        <ng-container *ngIf="isVideo; else resourceLink">
+          <video *ngIf="videoSrc" [src]="videoSrc" controls style="width:100%; border-radius:8px; margin-bottom:12px;"></video>
+          <div *ngIf="!videoSrc">Preparing video…</div>
+        </ng-container>
+        <ng-template #resourceLink>
+          <a [href]="data.item.url" target="_blank" rel="noopener">Open resource</a>
+        </ng-template>
       </div>
       <p class="muted" *ngIf="data.item.displayName || data.item.user_id" style="margin-top:12px;">Uploaded by: <strong>{{ data.item.displayName || (data.item.user_id | slice:0:8) }}</strong></p>
     </mat-dialog-content>
@@ -210,6 +324,8 @@ export class KnowledgeComponent {
 })
 export class KnowledgeItemDialogComponent {
   deleting = false;
+  isVideo = false;
+  videoSrc: string | null = null;
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: { item: KnowledgeItem; canDelete: boolean },
     private knowledge: KnowledgeService,
@@ -227,6 +343,18 @@ export class KnowledgeItemDialogComponent {
       this.toast.show(res.error || 'Delete failed', 'error');
     } else {
       this.dialogRef.close({ deleted: true });
+    }
+  }
+
+  async ngOnInit() {
+    try {
+      this.isVideo = !!this.data?.item?.type && this.data.item.type.startsWith('video/');
+      if (this.isVideo && this.data?.item?.url) {
+        // Request a short-lived signed URL from the server so videos only play on our site
+        this.videoSrc = await this.knowledge.getSignedUrlForPublicUrl(this.data.item.url, 300);
+      }
+    } catch (e) {
+      console.warn('Knowledge dialog video init error', e);
     }
   }
 }

@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
+import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PrivacyDialogComponent } from '../legal/privacy-dialog.component';
@@ -14,7 +16,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 @Component({
   selector: 'app-signup',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, ...MATERIAL_IMPORTS],
+  imports: [CommonModule, ReactiveFormsModule, ...MATERIAL_IMPORTS, HttpClientModule],
   templateUrl: './signup.component.html',
   styleUrls: ['./signup.component.scss'],
   encapsulation: ViewEncapsulation.None,
@@ -25,6 +27,8 @@ export class SignupComponent {
   form = this.fb.group({
     fullname: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
     email: ['', [Validators.required, Validators.email]],
+    phone: ['', [Validators.required, Validators.pattern(/^(?:\+63|0)9\d{9}$/)]],
+    address: ['', [Validators.required, Validators.minLength(5), Validators.maxLength(200)]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     confirmPassword: ['', [Validators.required]],
     privacy: [false, Validators.requiredTrue],
@@ -34,20 +38,16 @@ export class SignupComponent {
   message = '';
   submitting = false;
   showAgreeModal = false;
-  verificationSent = false;
-  verificationEmail = '';
-  resendBusy = false;
-  verificationCheckBusy = false;
   constructor(
     private fb: FormBuilder, 
     private auth: AuthService,
+    private http: HttpClient,
     private router: Router,
     private dialog: MatDialog,
     private snackBar: MatSnackBar,
     private authDialog: AuthDialogService,
     @Optional() private dialogRef?: MatDialogRef<SignupComponent>
   ) {}
-
   passwordsMatch(group: AbstractControl): ValidationErrors | null {
     const p = group.get('password')?.value;
     const c = group.get('confirmPassword')?.value;
@@ -77,62 +77,48 @@ export class SignupComponent {
     }
 
     if (!this.canSubmit) return; // guard against other invalid cases
-    const { fullname, email, password } = this.form.value;
+    const { fullname, email, password, phone, address } = this.form.value;
+    const normalizedFull = (fullname || '').trim();
+    // Block duplicate full name usage by calling server-side check
+    try {
+      const params = { name: normalizedFull };
+      const resp = await firstValueFrom(this.http.get<{ taken: boolean; source?: string; field?: string }>('/api/auth/check-name', { params }));
+      if (resp && resp.taken) {
+        this.snackBar.open('Full name already in use. Please choose a different name.', 'Dismiss', { duration: 5000, panelClass: ['snack-on-top'] });
+        return;
+      }
+    } catch (e) {
+      console.warn('Name-check endpoint failed:', e);
+      // allow signup to proceed if name-check fails
+    }
     this.submitting = true;
     try {
-      await this.auth.signUp(email!, password!, fullname!);
-      // Show verification message and offer resend
-      this.verificationSent = true;
-      this.verificationEmail = email || '';
-      this.message = 'Signup successful. A verification email has been sent.';
-      // Do not auto-redirect — wait for user to verify
+      // Notify user that signup is in progress
+      this.snackBar.open('Creating account…', undefined, { duration: 3000, panelClass: ['snack-on-top'] });
+      // Pass phone and address into user metadata so it is persisted with the auth user
+      await this.auth.signUp(email!, password!, fullname!, { phone: phone || null, address: address || null });
+      // Inform the user and open login dialog to proceed
+      this.message = 'Signup successful. Please check your email to verify your account.';
+      this.snackBar.open('Signup successful. Check your email.', 'OK', { duration: 4000, panelClass: ['snack-on-top'] });
+      if (this.dialogRef) {
+        this.dialogRef.close();
+        setTimeout(() => this.authDialog.openLogin(), 0);
+      } else {
+        this.authDialog.openLogin();
+      }
     } catch (e: any) {
       this.message = e?.message || 'Signup failed';
+      // Show error toast
+      this.snackBar.open(this.message, 'Dismiss', { duration: 5000, panelClass: ['snack-on-top'] });
     } finally {
       this.submitting = false;
     }
   }
-  
-    async resendVerification() {
-      if (!this.verificationEmail) return;
-      this.resendBusy = true;
-      try {
-        await this.auth.resendVerification(this.verificationEmail);
-        this.message = 'Verification email resent. Please check your inbox.';
-      } catch (e: any) {
-        this.message = e?.message || 'Failed to resend verification.';
-      } finally {
-        this.resendBusy = false;
-      }
-    }
 
-    async checkVerification() {
-      if (!this.verificationEmail) return;
-      this.verificationCheckBusy = true;
-      try {
-        const user = await this.auth.getCurrentUser();
-        if (user && user.email === this.verificationEmail) {
-            // Verified — switch to login dialog so the user can sign in
-            if (this.dialogRef) {
-              this.dialogRef.close();
-              setTimeout(() => this.authDialog.openLogin(), 0);
-            } else {
-              // No route — open login dialog
-              this.authDialog.openLogin();
-            }
-        } else {
-          this.message = 'Email not verified yet. Please check your inbox or click resend.';
-        }
-      } catch (e: any) {
-        this.message = e?.message || 'Error checking verification status.';
-      } finally {
-        this.verificationCheckBusy = false;
-      }
-  }
-  // Dialog handlers
   openPrivacy() {
     this.dialog.open(PrivacyDialogComponent, { width: '640px', maxHeight: '80vh' });
   }
+
   openTerms() {
     this.dialog.open(TermsDialogComponent, { width: '640px', maxHeight: '80vh' });
   }
@@ -146,4 +132,4 @@ export class SignupComponent {
     }
   }
 }
-// TODO: Replace with real signup service and route to dashboard after signup.
+

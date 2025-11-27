@@ -49,15 +49,27 @@
   padding: 4rem 2rem;
   text-align: center;
 
-  .welcome-content h1 {
-    font-size: 2.5rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-  }
+  /* Use app font tokens and add a subtle shadow for readability over green background */
+  .welcome-content {
+    font-family: var(--font-family);
 
-  .welcome-subtitle {
-    font-size: 1.2rem;
-    opacity: 0.9;
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+      color: #fff;
+      /* subtle dark shadow for depth and improved contrast */
+      text-shadow: 0 6px 18px rgba(0,0,0,0.35);
+      letter-spacing: -0.3px;
+    }
+
+    .welcome-subtitle {
+      font-size: 1.2rem;
+      opacity: 0.95;
+      color: #fff;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.28);
+      margin: 0;
+    }
   }
 }
 

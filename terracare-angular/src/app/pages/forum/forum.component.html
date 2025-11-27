@@ -65,7 +65,7 @@
         </ng-template>
       </mat-card-content>
       <mat-card-actions align="end">
-        <button mat-button (click)="toggleHeart(p)" [disabled]="!isLoggedIn" [color]="p.viewer_has_hearted ? 'warn' : undefined">
+        <button mat-button (click)="toggleHeart(p)" [disabled]="!isLoggedIn || userId === p.author_id" [color]="p.viewer_has_hearted ? 'warn' : undefined" matTooltip="You can't heart your own post">
           <mat-icon>{{ p.viewer_has_hearted ? 'favorite' : 'favorite_border' }}</mat-icon>
           {{ p.hearts_count || 0 }}
         </button>

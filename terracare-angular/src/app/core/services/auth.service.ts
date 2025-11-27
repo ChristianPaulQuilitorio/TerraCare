@@ -11,19 +11,17 @@ export class AuthService {
 		}
 	}
 
-	async signUp(email: string, password: string, fullname?: string) {
+	async signUp(email: string, password: string, fullname?: string, metadata?: Record<string, any>) {
 		try {
 			const signUpData: any = { email, password };
-			
-			// Add fullname to user metadata if provided
-			if (fullname) {
-				signUpData.options = {
-					data: {
-						full_name: fullname
-					}
-				};
+			// Build metadata payload (merge fullname + any provided metadata)
+			const meta: Record<string, any> = {};
+			if (fullname) meta['full_name'] = fullname;
+			if (metadata) Object.assign(meta, metadata);
+			if (Object.keys(meta).length) {
+				signUpData.options = { data: meta };
 			}
-			
+
 			const { data, error } = await this.supabase.client.auth.signUp(signUpData);
 			if (error) {
 				console.error('Signup error:', error);

@@ -117,6 +117,12 @@ export class ForumPostDialogComponent implements OnInit {
   }
 
   async toggleCommentHeart(comment: ForumComment) {
+    // Prevent users from hearting their own comments
+    if (this.userId && comment.user_id && this.userId === comment.user_id) {
+      this.toast.show("You can't heart your own comment", 'info');
+      return;
+    }
+
     // optimistic update
     const prev = !!comment.viewer_has_hearted;
     const prevCount = comment.hearts_count || 0;

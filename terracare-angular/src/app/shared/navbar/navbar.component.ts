@@ -72,6 +72,8 @@ import { TourService } from '../../core/services/tour.service';
 
         <!-- Actions -->
         <div class="navbar-actions">
+          <!-- Quick access to incident reporting -->
+          <a class="tc-btn tc-outline" routerLink="/incidents" title="Report Incident" style="margin-right:8px">Report Incident</a>
           <ng-container *ngIf="isAuthenticated && !isLandingRoute; else guestActions">
             <a class="tc-btn tc-outline" routerLink="/profile" title="Profile">Profile</a>
             <a class="tc-btn tc-primary" routerLink="/logout" title="Logout">Logout</a>
@@ -119,7 +121,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   navLinks = [
     { label: 'Home', route: '/home', exact: true },
     { label: 'Dashboard', route: '/dashboard', exact: false },
+    { label: 'Sustainability', route: '/scoreboard', exact: false },
     { label: 'Challenges', route: '/challenges', exact: false },
+    { label: 'Incidents', route: '/incidents', exact: false },
     { label: 'Leaderboard', route: '/leaderboard', exact: false },
     { label: 'Knowledge Hub', route: '/knowledge', exact: false },
     { label: 'Forum', route: '/forum', exact: false },
