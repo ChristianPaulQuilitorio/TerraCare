@@ -28,7 +28,8 @@
     "build": "cross-env NODE_NO_WARNINGS=1 ng build --configuration production",
     "build:dev": "cross-env NODE_NO_WARNINGS=1 ng build --configuration development",
     "build:ci": "cross-env NODE_NO_WARNINGS=1 ng build --configuration production",
-    "vercel-build": "npm run build:ci",
+    "vercel-build": "npm run build:ci && npm run bundle:server",
+    "bundle:server": "node scripts/bundle-server.js",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "eslint . --ext .ts,.html --max-warnings=0",
@@ -85,6 +86,8 @@
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "~5.4.2"
+    "typescript": "~5.4.2",
+    "esbuild": "^0.18.17"
   }
+
 }
