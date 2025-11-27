@@ -46671,7 +46671,12 @@ function run() {
     console.log(`Node Express server listening on http://localhost:${port}`);
   });
 }
-run();
+try {
+  if (typeof process !== "undefined" && import.meta && import.meta.url === `file://${process.argv[1]}`) {
+    run();
+  }
+} catch (e) {
+}
 
 // serverless-entry.ts
 var serverless_entry_default = app();

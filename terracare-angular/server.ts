@@ -1726,4 +1726,12 @@ function run(): void {
   });
 }
 
-run();
+// Only start the server when this file is executed directly (not when imported).
+// In ESM, compare import.meta.url to the invoked script path to detect direct execution.
+try {
+  if (typeof process !== 'undefined' && import.meta && import.meta.url === `file://${process.argv[1]}`) {
+    run();
+  }
+} catch (e) {
+  // If detection fails for any reason, default to not auto-starting the listener
+}
