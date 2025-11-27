@@ -36,6 +36,11 @@ body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f6fbf
 .btn.icon { padding: 10px 14px; border-radius: 8px; background: #e8f5e9; color: #2E7D32; }
 .btn.icon.outline { background: #fff; border: 1px solid #d8ead9; }
 
+/* Hide quick-add resource FAB when a dialog/modal is open */
+body.tc-dialog-open .dashboard-container .quick-actions .actions-grid button[aria-label="Add resource"] {
+	display: none !important;
+}
+
 .active-preview { margin-top: 6px; }
 .active-preview h4 { margin: 0; font-size: 1rem; }
 .leaderboard { margin-top: 12px; }

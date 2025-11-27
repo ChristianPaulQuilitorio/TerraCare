@@ -59,7 +59,7 @@ body {
 /* Maintain card sizing inside carousel */
 .carousel .card { flex: 0 0 300px; }
 /* controls removed per request */
-.navbar {
+.landing-navbar {
   display: flex;
   align-items: center;
   background: #fff;
@@ -67,14 +67,14 @@ body {
   border-bottom: 1px solid #eee;
 }
 
-.navbar-logo a {
+.landing-navbar-logo a {
   font-weight: bold;
   font-size: 1.3rem;
   color: #2E7D32;
   text-decoration: none;
 }
 
-.navbar-links {
+.landing-navbar-links {
   display: flex;
   gap: 24px;
   margin: 0 auto;
@@ -82,7 +82,7 @@ body {
   list-style: none;
 }
 
-.navbar-links li a {
+.landing-navbar-links li a {
   /* ensure card button not stretched full width */
   .card a.btn.small { width:auto; display:inline-block; min-width:unset; }
   color: #333;
@@ -93,12 +93,12 @@ body {
   transition: background 0.2s, color 0.2s;
 }
 
-.navbar-links li a:hover {
+.landing-navbar-links li a:hover {
   background: #4CAF50;
   color: white;
 }
 
-.navbar-actions {
+.landing-navbar-actions {
   display: flex;
   gap: 16px;
   list-style: none;
@@ -106,7 +106,7 @@ body {
   padding: 0;
 }
 
-.navbar-actions li a {
+.landing-navbar-actions li a {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -117,7 +117,7 @@ body {
   text-decoration: none;
 }
 
-.navbar-actions li a:hover {
+.landing-navbar-actions li a:hover {
   background: #4CAF50;
 }
 

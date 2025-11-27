@@ -289,8 +289,11 @@ export class BrowseChallengesComponent implements OnInit {
 
   openCreateModalGuarded() {
     if (!this.isAuthed) { this.toast.show('Please sign in to create challenges.', 'info'); return; }
+    // add a global body class so we can hide the toolbar while a dialog is open (prevents z-index/visibility issues)
+    try { document.body.classList.add('tc-dialog-open'); } catch (e) {}
     const ref = this.dialog.open(CreateChallengeDialogComponent, { width: '600px', maxHeight: '90vh', data: { } });
     ref.afterClosed().subscribe(async (result) => {
+      try { document.body.classList.remove('tc-dialog-open'); } catch (e) {}
       if (result && result.created) {
         // refresh challenges list
         await this.loadChallenges();
@@ -331,8 +334,10 @@ export class BrowseChallengesComponent implements OnInit {
   selectedChallenge: any = null;
 
   openDetails(c: any) {
+    try { document.body.classList.add('tc-dialog-open'); } catch (e) {}
     const ref = this.dialog.open(ChallengeDetailsDialogComponent, { width: '640px', maxHeight: '90vh', data: { challenge: c, isAuthed: this.isAuthed } });
     ref.afterClosed().subscribe(async (action) => {
+      try { document.body.classList.remove('tc-dialog-open'); } catch (e) {}
       if (action === 'join') {
         this.joinChallenge(c);
       } else if (action === 'leave') {
@@ -517,6 +522,8 @@ import { environment } from '../../../environments/environment';
   styles: [`
     .w-100 { width: 100%; }
     .dialog-body { display:flex; flex-direction:column; gap:16px; }
+    /* Ensure dialog content scrolls when attachments grow so tasks remain visible */
+    .dialog-body { max-height: calc(80vh); overflow:auto; padding-right:8px; }
     .attachments-block { border:1px dashed #cfd8dc; padding:12px; border-radius:8px; background:#fcfcfc; }
     .attach-row { display:flex; align-items:center; gap:8px; }
     .attach-list { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
@@ -684,8 +691,10 @@ export class CreateChallengeDialogComponent {
   `,
   styles:[`
     .details-body { display:flex; flex-direction:column; gap:12px; }
+    /* Make details modal content scrollable so tasks remain visible when images are large */
+    .details-body { max-height: calc(80vh); overflow:auto; padding-right:8px; }
     .details-hero { width:100%; display:block; border-radius:8px; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,.12); background-color: #fff; }
-    .details-hero-img { display:block; width:100%; height:auto; max-width:100%; object-fit:contain; border-radius:8px; margin-bottom:12px; /* default: fit within dialog */ max-height: calc(90vh - 160px); }
+    .details-hero-img { display:block; width:100%; height:auto; max-width:100%; object-fit:contain; border-radius:8px; margin-bottom:12px; /* default: fit within dialog */ max-height: calc(60vh); }
 
     /* Smaller screens: allow a bit more space for header/footer */
     @media (max-width: 520px) {

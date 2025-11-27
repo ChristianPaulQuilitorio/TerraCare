@@ -95,3 +95,6 @@
 .navbar-shell.drawer-open .mat-mdc-sidenav-scrim {
   pointer-events: auto;
 }
+
+/* Hide main navbar when a dialog is open to avoid z-index and clipping issues */
+body.tc-dialog-open .navbar-shell { display: none !important; }

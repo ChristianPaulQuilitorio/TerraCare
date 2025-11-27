@@ -29,7 +29,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
                 <img [src]="r.image_url" alt="report image" style="max-width:120px; border-radius:6px; display:block;" />
               </div>
               <div style="margin-top:8px; display:flex; gap:8px;">
-                <button class="secondary" (click)="openDeleteModal(r)">Delete</button>
+                <button *ngIf="canDelete(r)" class="btn-delete" (click)="openDeleteModal(r)">Delete</button>
               </div>
             </li>
           </ul>
@@ -54,7 +54,11 @@ import { SupabaseService } from '../../core/services/supabase.service';
               <input formControlName="location" placeholder="Location (populated from map)" />
 
             <label>Photo (optional)</label>
-            <input type="file" accept="image/*" (change)="onFileSelected($event)" />
+            <div class="file-input-wrap">
+              <input id="incident-photo" type="file" accept="image/*" (change)="onFileSelected($event)" style="display:none;" />
+              <label for="incident-photo" class="btn-choose">Choose photo</label>
+              <span *ngIf="selectedFile" class="file-name">{{ selectedFile.name }}</span>
+            </div>
             <div *ngIf="previewUrl" style="margin-top:8px;"><img [src]="previewUrl" style="max-width:100%; border-radius:6px; border:1px solid #eee;" /></div>
 
             <div class="actions">
@@ -71,7 +75,7 @@ import { SupabaseService } from '../../core/services/supabase.service';
               <p>Please provide a reason for deleting this report (optional):</p>
               <textarea [(ngModel)]="deleteReason" rows="4" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;"></textarea>
               <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:10px;">
-                <button (click)="confirmDelete()" style="background:#d32f2f; color:#fff; padding:8px 12px; border-radius:6px; border:none;">Confirm Delete</button>
+                <button (click)="confirmDelete()" class="btn-delete">Confirm Delete</button>
                 <button class="secondary" (click)="cancelDelete()">Cancel</button>
               </div>
             </div>
@@ -95,6 +99,16 @@ import { SupabaseService } from '../../core/services/supabase.service';
     .actions { display:flex; gap:8px; margin-top:6px; }
     .actions button { padding:10px 14px; border-radius:8px; border:none; cursor:pointer; font-weight:600; }
     .actions .secondary { background:#eee; }
+
+    /* File input and button styles */
+    .file-input-wrap { display:flex; align-items:center; gap:8px; }
+    .btn-choose { display:inline-block; background:#2E7D32; color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:600; }
+    .btn-choose:hover { opacity:0.95; }
+    .file-name { font-size:0.9rem; color:#444; }
+
+    /* Danger / delete button */
+    .btn-delete { background:#d32f2f; color:#fff; padding:8px 12px; border-radius:6px; border:none; cursor:pointer; font-weight:700; }
+    .btn-delete:hover { filter:brightness(0.95); }
     .reports-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:10px; }
     .reports-list li { background:#fff; padding:10px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,0.04); }
     .desc { margin-top:6px; color:#333; }
@@ -125,6 +139,7 @@ export class IncidentsComponent implements OnInit {
   private L: any = null;
   private map: any = null;
   incidents: any[] = [];
+  currentUserId: string | null = null;
   deleteModalVisible = false;
   deleteTarget: any = null;
   deleteReason = '';
@@ -202,6 +217,13 @@ export class IncidentsComponent implements OnInit {
 
     // Load recent incidents from server (best-effort) and normalize timestamp field
     try {
+      // Get current session user id (if any) so we can show/hide delete actions
+      try {
+        const sess = await this.supabase.client.auth.getSession();
+        const userId = sess?.data?.session?.user?.id || null;
+        this.currentUserId = userId;
+      } catch (e) { this.currentUserId = null; }
+
       const data: any = await this.http.get('/api/incidents').toPromise().catch(() => null);
       if (Array.isArray(data)) {
         this.incidents = data.map((r: any) => ({ ...r, createdAt: r.created_at || r.createdAt || (r.createdAtRaw || new Date().toISOString()) }));
@@ -209,6 +231,15 @@ export class IncidentsComponent implements OnInit {
     } catch (e) {
       // ignore - we'll show empty list
     }
+  }
+
+  canDelete(r: any) {
+    try {
+      if (!r) return false;
+      if (!r.user_id) return false; // do not allow deleting anonymous reports
+      if (!this.currentUserId) return false;
+      return String(r.user_id) === String(this.currentUserId);
+    } catch (e) { return false; }
   }
 
   private initMap() {

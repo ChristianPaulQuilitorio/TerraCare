@@ -169,12 +169,15 @@ export class KnowledgeComponent {
   }
 
   openItem(item: KnowledgeItem) {
+    // Signal global UI that a dialog is open so global controls can hide
+    try { document.body.classList.add('tc-dialog-open'); } catch (e) {}
     const ref = this.dialog.open(KnowledgeItemDialogComponent, {
       width: '720px',
       maxHeight: '80vh',
       data: { item, canDelete: !!this.currentUserId && this.currentUserId === item.user_id },
     });
     ref.afterClosed().subscribe(res => {
+      try { document.body.classList.remove('tc-dialog-open'); } catch (e) {}
       if (res && res.deleted) {
         this.items = this.items.filter(i => i.id !== item.id);
         this.toast.show('Resource deleted', 'success');
@@ -183,12 +186,14 @@ export class KnowledgeComponent {
   }
 
   openUploadDialog() {
+    try { document.body.classList.add('tc-dialog-open'); } catch (e) {}
     const ref = this.dialog.open(UploadDialogComponent, {
       width: '720px',
       maxHeight: '80vh',
       data: {},
     });
     ref.afterClosed().subscribe(async (res: any) => {
+      try { document.body.classList.remove('tc-dialog-open'); } catch (e) {}
       if (res && res.created) {
         // Prepend the created item so user sees it immediately
         this.items = [res.created as KnowledgeItem].concat(this.items || []);

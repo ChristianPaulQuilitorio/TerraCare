@@ -62,7 +62,7 @@ interface Message { role: 'user' | 'assistant' | 'system'; content: string }
             </div>
             <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end">
               <button mat-stroked-button class="quick-pill" (click)="viewChallenge(it)">View</button>
-              <button *ngIf="!it.owned" mat-flat-button color="primary" (click)="joinFromChat(it)" [disabled]="it.joined">{{ it.joined ? 'Joined' : 'Join' }}</button>
+              <!-- Join removed from chat UI: users should join from the Challenges page -->
             </div>
           </div>
         </div>
@@ -193,7 +193,7 @@ export class ChatbotComponent {
   quickPrompts: string[] = [
     'What challenges are available?',
     "What's my progress?",
-    'How do I join a challenge?',
+    'How to enroll in a challenge?',
     'How to upload proof photos?'
   ];
   // UI state
@@ -235,7 +235,7 @@ export class ChatbotComponent {
     'I found these helpful articles related to your question:\n\n': 'Nakita ko ang mga artikulong makakatulong tungkol sa iyong tanong:\n\n',
     'I can list challenges and show your progress locally. Try a quick prompt or ask about a specific feature.': 'Maaari kong ilista ang mga hamon at ipakita ang iyong progreso nang lokal. Subukan ang isang quick prompt o magtanong tungkol sa isang partikular na tampok.',
     'I can list challenges and show your progress locally. Enable AI backend (toggle at top) for more conversational replies.': 'Maaari kong ilista ang mga hamon at ipakita ang iyong progreso nang lokal.',
-    'Please sign in to join challenges — tap Sign In and I will join it for you.': 'Mangyaring mag-sign in upang makasali sa mga hamon — pindutin ang "Sign In" at sasaliin kita.',
+    // join-via-chat prompt removed; chatbot will not perform joins directly
     'You\'re already joined to': 'Nakasali ka na sa',
     'You\'re now joined to': 'Sumali ka na sa',
     'To join a challenge, follow these steps:\n\n1) Sign in to your account (top-right).\n2) Open the "Challenges" page and browse available challenges.\n3) Click a challenge to view details.\n4) On the challenge page click the "Join" button to enroll.\n5) Once joined, you\'ll see the challenge under your Dashboard -> Active Challenges.\n\nIf you want, I can show available challenges now — just ask "What challenges are available?" or click the Browse link.':
@@ -742,7 +742,8 @@ export class ChatbotComponent {
       const session = await this.auth.getSession();
       const user = session?.user || null;
       if (!user) {
-        this.messages.push({ role: 'assistant', content: this.t('Please sign in to join challenges — tap Sign In and I will join it for you.') });
+        // Chat remains view-only for enrolment — ask user to sign in to view progress/details
+        this.messages.push({ role: 'assistant', content: this.t('Please sign in so I can look up your progress — tap Sign In and I will show your progress.') });
         return;
       }
       // attempt to insert participant record

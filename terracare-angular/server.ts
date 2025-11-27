@@ -1028,14 +1028,15 @@ export function app(): express.Express {
       // Attempt to inspect the row first (adminClient preferred so RLS won't hide rows)
       const adminClient = SUPABASE_SERVICE_ROLE_KEY ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY) : null;
       const checkClient = adminClient || serverClient;
+      let existingRow: any = null;
       try {
         if (checkClient) {
           try {
             const { data: existing, error: existErr } = await checkClient.from('incidents').select('id, user_id, created_at').eq('id', id).maybeSingle();
             if (existErr) {
-              // If adminClient failed, log and continue to attempt delete below
               console.warn('[api] pre-delete existence check returned error:', existErr);
             } else if (existing) {
+              existingRow = existing;
               console.log('[api] pre-delete: incident exists id=', id, 'user_id=', existing.user_id, 'created_at=', existing.created_at);
             } else {
               console.log('[api] pre-delete: incident not found id=', id);
@@ -1046,7 +1047,26 @@ export function app(): express.Express {
         }
       } catch (e) {}
 
-      // If using service role, attempt an admin delete that bypasses RLS
+      // Enforce ownership: only the creator may delete the incident. If the row has a user_id,
+      // require that the authenticated user matches that id. For anonymous/ownerless rows,
+      // deny deletes via this endpoint (administrative cleanup should be performed out-of-band).
+      try {
+        const requester = (res.locals as any).user;
+        const requesterId = requester && typeof requester.id === 'string' ? requester.id : null;
+        if (existingRow && existingRow.user_id) {
+          if (!requesterId || requesterId !== existingRow.user_id) {
+            return res.status(403).json({ error: 'forbidden', message: 'only the report creator may delete this incident' });
+          }
+        } else if (existingRow && !existingRow.user_id) {
+          // Row exists but has no owner — be conservative and disallow deletion via API
+          return res.status(403).json({ error: 'forbidden', message: 'anonymous reports cannot be deleted via API' });
+        }
+      } catch (e) {
+        // on error, be conservative and deny
+        return res.status(403).json({ error: 'forbidden' });
+      }
+
+      // If passing the ownership check and using service role, perform admin delete (owner verified)
       if (adminClient) {
         try {
           const { data, error } = await adminClient.from('incidents').delete().eq('id', id).select('*').maybeSingle();
@@ -1056,8 +1076,6 @@ export function app(): express.Express {
             return res.status(500).json({ error: msg, details: process.env['NODE_ENV'] !== 'production' ? error : undefined });
           }
           if (!data) {
-            // If pre-delete select showed a row existed but delete returned no data,
-            // respond with 403 when RLS/policy may have prevented visibility, else 404
             return res.status(404).json({ error: 'not_found' });
           }
           return res.json({ ok: true, removed: data });
@@ -1079,8 +1097,6 @@ export function app(): express.Express {
           return res.status(500).json({ error: msg, details: process.env['NODE_ENV'] !== 'production' ? error : undefined });
         }
         if (!data) {
-          // No row returned by delete — this usually means either the row didn't exist
-          // or RLS prevented visibility. Help the developer by indicating this.
           return res.status(404).json({ error: 'not_found' });
         }
         return res.json({ ok: true, removed: data });

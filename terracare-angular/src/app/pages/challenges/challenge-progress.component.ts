@@ -21,7 +21,6 @@ import { ToastService } from '../../shared/toast/toast.service';
       </div>
       <div class="header-actions">
         <button mat-stroked-button routerLink="/challenges">Back</button>
-        <button mat-raised-button color="primary">Share Progress</button>
       </div>
     </header>
 

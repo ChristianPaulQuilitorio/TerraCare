@@ -119,6 +119,11 @@ body {
   }
 }
 
+/* Hide the Create Challenge button while any dialog is open (body.tc-dialog-open set by dialog handlers) */
+body.tc-dialog-open .browse-hero .hero-actions button.tc-primary {
+  display: none !important;
+}
+
 /* ✨ Marquee Carousel */
 .marquee {
   margin: 30px 0;
