@@ -1,5 +1,8 @@
+import serverless from 'serverless-http';
 import { app } from './server';
 
-// Export the Express app instance as the default export. Vercel's Node runtime
-// can accept an Express-compatible request handler as a serverless function.
-export default app();
+// Wrap the Express app with `serverless-http` so Vercel recognizes and invokes
+// the handler as a standard serverless function. This avoids lifecycle issues
+// caused by modules that attempt to start their own listener when imported.
+const handler = serverless(app());
+export default handler;
