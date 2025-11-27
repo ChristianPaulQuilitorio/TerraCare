@@ -10,6 +10,7 @@
       }
     }
   ],
+  "devCommand": "npm run dev",
   "routes": [
     {
       "src": "/api/(.*)",

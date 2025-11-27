@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, OnInit, Input, Output, EventEmitter, OnDestroy, ChangeDetectionStrategy, ViewChild } from '@angular/core';
+import { Component, ViewEncapsulation, OnInit, Input, Output, EventEmitter, OnDestroy, ChangeDetectionStrategy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { MatSidenav } from '@angular/material/sidenav';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Subscription } from 'rxjs';
@@ -133,11 +133,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   private bpSub?: Subscription;
   private navEndSub?: Subscription;
   private supabaseAuthSub?: { unsubscribe: () => void };
+  private authSub?: Subscription;
   isLandingRoute = false;
 
   constructor(
     private router: Router,
     private authService: AuthService,
+    private cdr: ChangeDetectorRef,
     private authDialog: AuthDialogService,
     private breakpoints: BreakpointObserver,
     private supabase: SupabaseService,
@@ -147,6 +149,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
   ngOnInit() {
     // Check auth status without blocking UI
     this.checkAuthStatus();
+    // Subscribe to AuthService authState to update UI immediately on login/logout
+    try {
+      this.authSub = this.authService.authState.subscribe(v => {
+        this.isAuthenticated = !!v;
+        try { this.cdr.markForCheck(); } catch (e) {}
+      });
+    } catch (e) {}
     // Observe viewport size for mobile menu
     this.bpSub = this.breakpoints.observe('(max-width: 840px)').subscribe(result => {
       this.isHandset = result.matches;
@@ -156,6 +165,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     // React to Supabase auth state changes to keep navbar actions in sync
     const { data } = this.supabase.client.auth.onAuthStateChange((_event, session) => {
       this.isAuthenticated = !!session?.user;
+      try { this.cdr.markForCheck(); } catch (e) {}
     });
     this.supabaseAuthSub = data?.subscription as any;
 
@@ -177,6 +187,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     this.bpSub?.unsubscribe();
     this.navEndSub?.unsubscribe();
     this.supabaseAuthSub?.unsubscribe?.();
+    this.authSub?.unsubscribe();
   }
 
   async checkAuthStatus() {

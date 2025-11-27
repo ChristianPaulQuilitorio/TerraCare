@@ -1,14 +1,20 @@
 import { Injectable } from '@angular/core';
+import { BehaviorSubject } from 'rxjs';
 import { SupabaseService } from './supabase.service';
 import type { Session, User } from '@supabase/supabase-js';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+	// Observable auth state for UI components (true when a user is signed in)
+	public authState = new BehaviorSubject<boolean>(false);
+
 	constructor(private supabase: SupabaseService) {
 		// Check if Supabase is properly configured
 		if (!this.supabase.client) {
 			console.error('Supabase client not properly initialized');
 		}
+		// initialize current auth state without blocking
+		this.getCurrentUser().then(u => this.authState.next(!!u)).catch(() => this.authState.next(false));
 	}
 
 	async signUp(email: string, password: string, fullname?: string, metadata?: Record<string, any>) {
@@ -41,6 +47,8 @@ export class AuthService {
 				console.error('Signin error:', error);
 				throw new Error(error.message || 'Invalid email or password');
 			}
+			// mark auth state live
+			this.authState.next(!!(data?.session?.user));
 			return data;
 		} catch (error: any) {
 			console.error('Signin exception:', error);
@@ -111,6 +119,8 @@ export class AuthService {
 				}
 			}
 		} catch {}
+		// notify listeners that user is logged out
+		try { this.authState.next(false); } catch {}
 	}
 
 	async getSession(): Promise<Session | null> {
