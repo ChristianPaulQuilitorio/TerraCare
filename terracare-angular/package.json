@@ -34,7 +34,7 @@
     "test": "ng test",
     "lint": "eslint . --ext .ts,.html --max-warnings=0",
     "serve:ssr:terracare-angular": "node dist/terracare-angular/server/server.mjs",
-    "dev:server": "cross-env NODE_NO_WARNINGS=1 PORT=4000 node -r ts-node/register server.ts",
+    "dev:server": "cross-env NODE_NO_WARNINGS=1 PORT=4000 FORCE_START=true node -r ts-node/register server.ts",
     "dev": "concurrently \"npm:dev:server\" \"npm:start\"",
     "dev:proxy": "cross-env PORT=4000 node -r dotenv/config server-dev-proxy.js"
   },

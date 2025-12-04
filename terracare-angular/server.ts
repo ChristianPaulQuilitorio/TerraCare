@@ -179,6 +179,11 @@ export function app(): express.Express {
     res.json({ ok: true, ts: new Date().toISOString() });
   });
 
+  // Simple ping endpoint for local dev proxies and monitors
+  server.get('/api/ping', (_req, res) => {
+    res.type('text/plain').send('pong');
+  });
+
   // Dev-only: initialize storage bucket if missing (requires service role key)
   server.post('/api/storage/init', async (req, res) => {
     try {
@@ -1436,6 +1441,36 @@ export function app(): express.Express {
     }
   });
 
+  // Deforestation hotspots: simple GeoJSON hotspots (fallback when data sources unavailable)
+  server.get('/api/deforestation-hotspots', async (_req, res) => {
+    try {
+      // If Supabase or external sources are not configured, return seeded demo points
+      const demo = {
+        type: 'FeatureCollection',
+        features: [
+          { type: 'Feature', properties: { intensity: 'high', source: 'demo' }, geometry: { type: 'Point', coordinates: [121.0400, 14.6700] } },
+          { type: 'Feature', properties: { intensity: 'medium', source: 'demo' }, geometry: { type: 'Point', coordinates: [121.0300, 14.6600] } }
+        ]
+      };
+      return res.json(demo);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'failed to load hotspots' });
+    }
+  });
+
+  // Reforestation projects: list of projects with basic metadata (fallback for local dev)
+  server.get('/api/reforestation-projects', async (_req, res) => {
+    try {
+      const list = [
+        { id: 'proj-1', name: 'Marikina Riparian Planting', lat: 14.6800, lng: 121.0400, status: 'active' },
+        { id: 'proj-2', name: 'Sierra Madre Rehab', lat: 15.2000, lng: 121.3000, status: 'planning' }
+      ];
+      return res.json(list);
+    } catch (e: any) {
+      return res.status(500).json({ error: e?.message || 'failed to load projects' });
+    }
+  });
+
   // Scoreboard proxy: fetch environmental indicators server-side to avoid CORS
   // Query params: lat, lng, radius (meters)
   server.get('/api/scoreboard', async (req, res) => {
@@ -1729,7 +1764,8 @@ function run(): void {
 // Only start the server when this file is executed directly (not when imported).
 // In ESM, compare import.meta.url to the invoked script path to detect direct execution.
 try {
-  if (typeof process !== 'undefined' && import.meta && import.meta.url === `file://${process.argv[1]}`) {
+  const forceStart = String(process.env['FORCE_START'] || '').toLowerCase() === 'true' || process.env['FORCE_START'] === '1';
+  if (forceStart || (typeof process !== 'undefined' && import.meta && import.meta.url === `file://${process.argv[1]}`)) {
     run();
   }
 } catch (e) {
