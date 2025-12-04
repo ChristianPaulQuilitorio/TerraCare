@@ -43,3 +43,7 @@ Thumbs.db
 
 # Local environment files (keep secrets out of git)
 .env
+.vercel
+.vercel/**
+.vercel/output
+.vercel/output/**
