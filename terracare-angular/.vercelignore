@@ -1,6 +1,8 @@
 node_modules
 dist
 .vercel/output
+**/.vercel/output/**
+.vercel
 .vscode
 .env
 *.log
