@@ -1,21 +1,6 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist/terracare-angular/browser",
-        "buildCommand": "npm run vercel-build"
-      }
-    }
-  ],
-  "devCommand": "npm run dev",
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
     {
       "src": "^/(?!.*\\..*$)(.*)$",
       "dest": "/index.html"
