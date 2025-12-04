@@ -1,0 +1,4 @@
+[
+  { "id": "proj-1", "name": "Marikina Riparian Planting", "lat": 14.6800, "lng": 121.0400, "status": "active", "partner": "LGU + Volunteers", "start": "2025-08-01" },
+  { "id": "proj-2", "name": "Sierra Madre Rehab", "lat": 15.2000, "lng": 121.3000, "status": "planning", "partner": "NGO Coalition", "start": "2025-09-15" }
+]

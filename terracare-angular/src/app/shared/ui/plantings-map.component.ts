@@ -8,12 +8,24 @@ import { HttpClient } from '@angular/common/http';
   imports: [CommonModule],
   template: `
     <div class="plantings-map-root">
-      <div class="plantings-controls" *ngIf="months && months.length">
-        <label for="monthSelect">Show month:</label>
-        <select id="monthSelect" (change)="onMonthChange($any($event.target).value)">
-          <option value="all">All (last 12 months)</option>
-          <option *ngFor="let m of months" [value]="m.key">{{ m.label }}</option>
-        </select>
+      <div class="plantings-controls">
+        <label>
+          Region:
+          <select (change)="onRegionChange($any($event.target).value)">
+            <option value="ph">Philippines</option>
+            <option value="sea">Southeast Asia</option>
+            <option value="global">Global (large)</option>
+          </select>
+        </label>
+        <label style="margin-left:10px">
+          Recent alerts:
+          <select (change)="onDaysChange($any($event.target).value)">
+            <option value="1">Last 24h</option>
+            <option value="3" selected>Last 3 days</option>
+            <option value="7">Last 7 days</option>
+            <option value="14">Last 14 days</option>
+          </select>
+        </label>
         <label style="margin-left:10px"><input type="checkbox" (change)="toggleHotspots($any($event.target).checked)" [checked]="hotspotsVisible"/> Show deforestation hotspots</label>
         <label style="margin-left:10px"><input type="checkbox" (change)="toggleProjects($any($event.target).checked)" [checked]="projectsVisible"/> Show reforestation projects</label>
       </div>
@@ -47,8 +59,17 @@ export class PlantingsMapComponent implements OnInit, OnDestroy {
   currentMonth: string | 'all' = 'all';
   hotspotsLayer: any = null;
   projectsLayer: any = null;
+  firesLayer: any = null;
+  gainTile: any = null; // deprecated: GFW gain
+  worldCoverTile: any = null;
   hotspotsVisible = false;
   projectsVisible = false;
+  firesVisible = false;
+  gainVisible = false; // deprecated: GFW gain
+  worldCoverVisible = false;
+  // FIRMS controls
+  region: 'ph' | 'sea' | 'global' = 'ph';
+  recentDays = 3;
 
   constructor(private el: ElementRef, private http: HttpClient) {}
 
@@ -61,23 +82,7 @@ export class PlantingsMapComponent implements OnInit, OnDestroy {
       }
     } catch (e) { this.sample = []; }
 
-    // Fetch timeseries months for the last 12 months if available
-    try {
-      const ts: any = await this.http.get('/api/metrics/plantings-timeseries').toPromise().catch(() => null);
-      if (ts && Array.isArray(ts.series)) {
-        this.months = ts.series.map((s: any) => ({ key: s.month, label: s.month }));
-      } else {
-        // Build a default last-12-months list
-        const now = new Date();
-        const months: any[] = [];
-        for (let i = 11; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-          months.push({ key, label: key });
-        }
-        this.months = months;
-      }
-    } catch (e) { /* ignore */ }
+    // Removed month filter UI; keep controls minimal per request
 
     // Try dynamic import of Leaflet and optional markercluster plugin to avoid forcing hard deps
     try {
@@ -115,11 +120,58 @@ export class PlantingsMapComponent implements OnInit, OnDestroy {
     if (!container) return;
     this.map = this.L.map(container).setView([12.8797, 121.7740], 6);
     this.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18 }).addTo(this.map);
+    
+    // preset icons
+    const TreeIcon = this.L.icon({
+      iconUrl: 'assets/icons/tree-marker.svg',
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
+      popupAnchor: [0, -24],
+      className: 'marker-tree'
+    });
+    const ProjectIcon = this.L.icon({
+      iconUrl: 'assets/icons/project-marker.svg',
+      iconSize: [28, 28],
+      iconAnchor: [14, 28],
+      popupAnchor: [0, -24],
+      className: 'marker-project'
+    });
+    const HotspotIcon = this.L.icon({
+      iconUrl: 'assets/icons/hotspot-marker.svg',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30],
+      popupAnchor: [0, -26],
+      className: 'marker-hotspot'
+    });
 
     // add empty hotspot and project layers
     try {
-      this.hotspotsLayer = this.L.geoJSON(null, { style: { color: '#b71c1c', weight: 1, fillOpacity: 0.35 } });
-      this.projectsLayer = this.L.geoJSON(null, { pointToLayer: (f: any, latlng: any) => this.L.circleMarker(latlng, { radius: 6, color: '#2e7d32', fillColor: '#66bb6a', fillOpacity: 0.9 }) });
+      this.hotspotsLayer = this.L.geoJSON(null, {
+        pointToLayer: (_f: any, latlng: any) => this.L.marker(latlng, { icon: HotspotIcon }),
+        onEachFeature: (feature: any, layer: any) => {
+          const p = feature?.properties || {};
+          const title = p.name || p.title || 'Deforestation hotspot';
+          const when = p.date || p.observed || p.updated || '';
+          const desc = p.description || p.source || '';
+          const tooltip = `<strong>${this.escapeHtml(title)}</strong>${when ? `\n${this.escapeHtml(when)}` : ''}${desc ? `\n${this.escapeHtml(desc)}` : ''}`;
+          try { layer.bindTooltip(tooltip, { direction: 'top', sticky: true }); } catch {}
+          try { layer.bindPopup(`<div><strong>${this.escapeHtml(title)}</strong>${when ? `<div>${this.escapeHtml(when)}</div>` : ''}${desc ? `<div>${this.escapeHtml(desc)}</div>` : ''}</div>`); } catch {}
+        }
+      });
+      this.projectsLayer = this.L.geoJSON(null, {
+        pointToLayer: (_f: any, latlng: any) => this.L.marker(latlng, { icon: ProjectIcon }),
+        onEachFeature: (feature: any, layer: any) => {
+          const p = feature?.properties || {};
+          const title = p.name || 'Reforestation project';
+          const status = p.status || p.phase || '';
+          const partner = p.partner || p.org || '';
+          const started = p.start || p.startDate || '';
+          const tooltip = `<strong>${this.escapeHtml(title)}</strong>${status ? `\n${this.escapeHtml(status)}` : ''}${partner ? `\n${this.escapeHtml(partner)}` : ''}`;
+          try { layer.bindTooltip(tooltip, { direction: 'top', sticky: true }); } catch {}
+          try { layer.bindPopup(`<div><strong>${this.escapeHtml(title)}</strong>${status ? `<div>${this.escapeHtml(status)}</div>` : ''}${partner ? `<div>${this.escapeHtml(partner)}</div>` : ''}${started ? `<div>${this.escapeHtml(started)}</div>` : ''}</div>`); } catch {}
+        }
+      });
+      this.firesLayer = this.L.geoJSON(null, { pointToLayer: (_f: any, latlng: any) => this.L.circleMarker(latlng, { radius: 5, color: '#ff6f00', fillColor: '#ff8f00', fillOpacity: 0.9 }) });
     } catch (e) { this.hotspotsLayer = null; this.projectsLayer = null; }
 
     // filter features by selected month if any
@@ -172,29 +224,50 @@ export class PlantingsMapComponent implements OnInit, OnDestroy {
 
     // Load GIS layers (hotspots and reforestation projects)
     this.loadHotspotsAndProjects();
+    // Removed fires/world cover from UI
 
     // Add layer control
     try {
       const overlays: any = {};
       if (this.hotspotsLayer) overlays['Deforestation hotspots'] = this.hotspotsLayer;
       if (this.projectsLayer) overlays['Reforestation projects'] = this.projectsLayer;
+      // Only deforestation hotspots and reforestation projects remain
       if (Object.keys(overlays).length) this.L.control.layers({}, overlays, { collapsed: false, position: 'topright' }).addTo(this.map);
     } catch (e) {}
   }
 
   private async loadHotspotsAndProjects() {
     try {
-      // Try server endpoints first; fallback to sample data
+      // Use real NASA FIRMS alerts for deforestation proxy; projects from assets
       let hotspots: any = null;
       let projects: any = null;
-      try { hotspots = await this.http.get('/api/deforestation-hotspots').toPromise().catch(() => null); } catch (e) { hotspots = null; }
-      try { projects = await this.http.get('/api/reforestation-projects').toPromise().catch(() => null); } catch (e) { projects = null; }
+      try {
+        const bbox = this.getBboxByRegion(this.region);
+        const url = `https://firms.modaps.eosdis.nasa.gov/mapserver/wfs/viirs?service=WFS&request=GetFeature&version=1.1.0&typeName=viirs_viirs&outputFormat=application/json&BBOX=${bbox}`;
+        hotspots = await fetch(url).then(r => r.ok ? r.json().catch(() => null) : null).catch(() => null);
+        // Normalize properties for tooltip/popup
+        if (hotspots && hotspots.type === 'FeatureCollection') {
+          hotspots.features = (hotspots.features || [])
+            .filter((f: any) => this.filterByRecentDays(f, this.recentDays))
+            .map((f: any) => {
+            const p = f.properties || {};
+            const n = p?.bright_ti4 ? `Fire ${p.bright_ti4}` : 'Active fire';
+            return { ...f, properties: { name: n, date: p?.acq_date || p?.date || '', source: 'NASA FIRMS (VIIRS)' } };
+          });
+        }
+      } catch (e) { hotspots = null; }
+      try {
+        // Prefer local curated dataset to improve accuracy when server not available
+        projects = await this.http.get('assets/data/reforestation-projects.json').toPromise().catch(() => null);
+        if (projects && Array.isArray(projects)) {
+          // Convert simple array to GeoJSON FeatureCollection
+          const feats = projects.map((p: any) => ({ type: 'Feature', properties: { name: p.name, status: p.status, partner: p.partner, start: p.start }, geometry: { type: 'Point', coordinates: [p.lng, p.lat] } }));
+          projects = { type: 'FeatureCollection', features: feats };
+        }
+      } catch (e) { projects = null; }
 
-      if (!hotspots) {
-        hotspots = { type: 'FeatureCollection', features: [
-          { type: 'Feature', properties: { name: 'Likely hotspot' }, geometry: { type: 'Polygon', coordinates: [[[121.0, 12.0],[121.2,12.0],[121.2,12.2],[121.0,12.2],[121.0,12.0]]] } }
-        ] };
-      }
+      // If FIRMS unavailable, keep minimal fallback empty collection
+      if (!hotspots) { hotspots = { type: 'FeatureCollection', features: [] }; }
       if (!projects) {
         projects = { type: 'FeatureCollection', features: [
           { type: 'Feature', properties: { name: 'Reforest Project A' }, geometry: { type: 'Point', coordinates: [120.9822, 14.6042] } }
@@ -214,19 +287,54 @@ export class PlantingsMapComponent implements OnInit, OnDestroy {
     } catch (e) { console.warn('loadHotspotsAndProjects failed', e); }
   }
 
-  onMonthChange(key: string) {
-    this.currentMonth = key || 'all';
-    // re-render markers by reusing sample and filtering by month
-    try {
-      // remove existing map layers and re-init markers portion
-      if (this.map) {
-        // remove all markers and re-add
-        // Simplest approach: remove and rebuild map markers by clearing and calling initMap again
-        try { this.map.remove(); } catch (e) {}
-        setTimeout(() => this.initMap(), 10);
-      }
-    } catch (e) {}
+  private getBboxByRegion(region: 'ph' | 'sea' | 'global'): string {
+    switch (region) {
+      case 'ph': return '114.0,4.0,127.0,21.0';
+      case 'sea': return '90.0,-12.0,150.0,25.0';
+      case 'global': return '-180.0,-85.0,180.0,85.0';
+      default: return '114.0,4.0,127.0,21.0';
+    }
   }
+
+  private filterByRecentDays(feature: any, days: number): boolean {
+    try {
+      const p = feature?.properties || {};
+      const dStr = p.acq_date || p.date || '';
+      if (!dStr) return true; // keep if unknown
+      const dt = new Date(dStr);
+      if (isNaN(dt.getTime())) return true;
+      const now = new Date();
+      const diff = (now.getTime() - dt.getTime()) / (1000 * 60 * 60 * 24);
+      return diff <= days;
+    } catch { return true; }
+  }
+
+  onRegionChange(val: string) {
+    if (val === 'ph' || val === 'sea' || val === 'global') {
+      this.region = val;
+      this.reloadHotspots();
+    }
+  }
+
+  onDaysChange(val: string) {
+    const n = parseInt(val, 10);
+    if (!isNaN(n) && n > 0) {
+      this.recentDays = n;
+      this.reloadHotspots();
+    }
+  }
+
+  private async reloadHotspots() {
+    try {
+      await this.loadHotspotsAndProjects();
+    } catch {}
+  }
+
+  // FIRMS loader removed per request
+
+  // WorldCover tile init removed per request
+
+  // Month change removed per request
 
   toggleHotspots(visible: boolean) {
     this.hotspotsVisible = !!visible;
@@ -237,6 +345,10 @@ export class PlantingsMapComponent implements OnInit, OnDestroy {
     this.projectsVisible = !!visible;
     try { if (this.projectsLayer) { if (this.projectsVisible) this.projectsLayer.addTo(this.map); else this.map.removeLayer(this.projectsLayer); } } catch (e) {}
   }
+
+  // Fires toggle removed per request
+
+  // WorldCover toggle removed per request
 
   private escapeHtml(s: string) {
     if (!s) return '';

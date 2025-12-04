@@ -23,11 +23,13 @@ export class InsightsService {
     try { localStorage.setItem(key, JSON.stringify({ ts: Date.now(), data })); } catch {}
   }
 
-  /** Fetch aggregated trees planted metric from server */
+  /** Fetch aggregated trees planted metric.
+   * Prefers public API-free fallback when serverless not available.
+   */
   async getTreesPlanted(): Promise<{ count: number; source?: string } | null> {
     try {
-      const url = `/api/metrics/trees-planted`;
-      const resp: any = await this.http.get(url).toPromise();
+      // Try serverless first, then fallback
+      const resp: any = await this.http.get(`/api/metrics/trees-planted`).toPromise().catch(() => null);
       if (!resp) return null;
       // normalize: allow resp.count or resp
       if (typeof resp.count === 'number') return { count: resp.count, source: resp.source };
@@ -51,55 +53,86 @@ export class InsightsService {
   }
 
   /**
-   * Fetch and normalize insights for a coordinate.
-   * Uses iNaturalist (species), Overpass (mangrove presence), OpenAQ (aq) — falls back to provided seed values.
+   * Client-only insights aggregation (no serverless):
+   * - OpenAQ: PM2.5 → waterQualityIndex
+   * - Overpass: mangrove/forest presence → mangroveCoverPct
+   * - iNaturalist: speciesObserved list
    */
   async getInsights(lat: number, lng: number, seed?: Partial<NormalizedInsight>): Promise<NormalizedInsight> {
     const key = this.cacheKey(lat, lng);
     const cached = this.readCache(key);
     if (cached) return cached as NormalizedInsight;
 
-    // Parallel requests
     const radiusKm = 10; // search radius
-    const iNatUrl = `https://api.inaturalist.org/v1/observations?lat=${lat}&lng=${lng}&radius=${radiusKm}&order=desc&order_by=observed_on&per_page=20`;
-        // Prefer server-side aggregated endpoint to avoid CORS and centralize logic
-        try {
-          const url = `/api/insights?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
-          const resp: any = await this.http.get(url).toPromise().catch(() => null);
-          const data = resp || {};
+    try {
+      const [openaq, inat, overpass] = await Promise.all([
+        this.http.get(`https://api.openaq.org/v2/latest?coordinates=${lat},${lng}&radius=${radiusKm*1000}`).toPromise().catch(() => null),
+        this.http.get(`https://api.inaturalist.org/v1/observations?lat=${lat}&lng=${lng}&radius=${radiusKm}&order=desc&order_by=observed_on&per_page=30`).toPromise().catch(() => null),
+        // Overpass requires POST with text/plain; use fetch directly
+        fetch('https://overpass-api.de/api/interpreter', {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain' },
+          body: `[out:json][timeout:25];(way["natural"="wood"]["wood"="mangrove"](${lat-0.15},${lng-0.15},${lat+0.15},${lng+0.15});relation["natural"="wood"]["wood"="mangrove"](${lat-0.15},${lng-0.15},${lat+0.15},${lng+0.15}););out body;>;out skel qt;`
+        }).then(r => r.ok ? r.json().catch(() => null) : null).catch(() => null)
+      ]);
 
-          const normalized: NormalizedInsight = {
-            waterQualityIndex: Number(data.waterQualityIndex ?? seed?.waterQualityIndex ?? 60),
-            mangroveCoverPct: Number(data.mangroveCoverPct ?? seed?.mangroveCoverPct ?? 0),
-            beachCleanlinessRating: Number(data.beachCleanlinessRating ?? seed?.beachCleanlinessRating ?? 3),
-            speciesObserved: Array.isArray(data.speciesObserved) ? data.speciesObserved.map(String).slice(0, 8) : (seed?.speciesObserved ?? []),
-            lastUpdated: String(data.lastUpdated ?? new Date().toISOString()),
-            note: data.note ?? seed?.note,
-          };
+      // OpenAQ → PM2.5
+      let pm25: number | null = null;
+      try {
+        const results = (openaq as any)?.results || [];
+        if (Array.isArray(results) && results.length) {
+          for (const r of results) {
+            const m = Array.isArray((r as any).measurements) ? (r as any).measurements.find((x: any) => String(x.parameter).toLowerCase() === 'pm25') : null;
+            if (m && typeof m.value === 'number') { pm25 = m.value; break; }
+          }
+        }
+      } catch {}
+      let waterQualityIndex = 60;
+      if (pm25 !== null) waterQualityIndex = Math.max(0, Math.min(100, Math.round(100 - pm25 * 2)));
 
-          this.saveCache(key, normalized);
-          return normalized;
-        } catch (e) {
-          // Fallback to seed values when server is unreachable
-          const fallback: NormalizedInsight = {
-            waterQualityIndex: seed?.waterQualityIndex ?? 60,
-            mangroveCoverPct: seed?.mangroveCoverPct ?? 0,
-            beachCleanlinessRating: seed?.beachCleanlinessRating ?? 3,
-            speciesObserved: seed?.speciesObserved ?? [],
-            lastUpdated: new Date().toISOString(),
-            note: seed?.note
-          };
-          this.saveCache(key, fallback);
-          return fallback;
-            }
+      // Overpass → mangrove presence heuristic
+      const mangroveDetected = !!(overpass && Array.isArray((overpass as any).elements) && (overpass as any).elements.length > 0);
+      const mangroveCoverPct = mangroveDetected ? 5 : 0;
+
+      // iNaturalist → species
+      let species: string[] = [];
+      try {
+        const results = (inat as any)?.results || [];
+        species = results
+          .map((r: any) => r?.taxon?.preferred_common_name || r?.taxon?.name)
+          .filter((n: any) => typeof n === 'string' && n.trim().length)
+          .reduce((acc: string[], cur: string) => { if (!acc.includes(cur)) acc.push(cur); return acc; }, [])
+          .slice(0, 8);
+      } catch {}
+
+      const normalized: NormalizedInsight = {
+        waterQualityIndex,
+        mangroveCoverPct,
+        beachCleanlinessRating: seed?.beachCleanlinessRating ?? 3,
+        speciesObserved: species,
+        lastUpdated: new Date().toISOString(),
+      };
+
+      this.saveCache(key, normalized);
+      return normalized;
+    } catch (e) {
+      const fallback: NormalizedInsight = {
+        waterQualityIndex: seed?.waterQualityIndex ?? 60,
+        mangroveCoverPct: seed?.mangroveCoverPct ?? 0,
+        beachCleanlinessRating: seed?.beachCleanlinessRating ?? 3,
+        speciesObserved: seed?.speciesObserved ?? [],
+        lastUpdated: new Date().toISOString(),
+      };
+      this.saveCache(key, fallback);
+      return fallback;
+    }
     }
 
       // Return raw provider response from server (/api/insights) when needed for inspection
       async getInsightsRaw(lat: number, lng: number): Promise<any> {
         try {
-          const url = `/api/insights?lat=${encodeURIComponent(lat)}&lng=${encodeURIComponent(lng)}`;
-          const resp: any = await this.http.get(url).toPromise();
-          return resp;
+          // Return the normalized form for inspection in a single call
+          return await this.getInsights(lat, lng);
         } catch (e) {
           return null;
         }
