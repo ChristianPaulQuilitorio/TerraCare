@@ -76,10 +76,9 @@ export class PlantingsMapComponent implements OnInit, OnDestroy {
   async ngOnInit() {
     // Fetch plantings first
     try {
-      const data: any = await this.http.get('/api/plantings').toPromise().catch(() => null);
-      if (data && data.type === 'FeatureCollection' && Array.isArray(data.features)) {
-        this.sample = data.features;
-      }
+      // If you have a local static GeoJSON, load it here (optional)
+      // Otherwise skip populating sample; map focuses on hotspots/projects
+      this.sample = [];
     } catch (e) { this.sample = []; }
 
     // Removed month filter UI; keep controls minimal per request

@@ -24,20 +24,27 @@ export class InsightsService {
   }
 
   /** Fetch aggregated trees planted metric.
-   * Prefers public API-free fallback when serverless not available.
+   * Client-only: derive from curated reforestation projects asset or cached value.
    */
   async getTreesPlanted(): Promise<{ count: number; source?: string } | null> {
     try {
-      // Try serverless first, then fallback
-      const resp: any = await this.http.get(`/api/metrics/trees-planted`).toPromise().catch(() => null);
-      if (!resp) return null;
-      // normalize: allow resp.count or resp
-      if (typeof resp.count === 'number') return { count: resp.count, source: resp.source };
-      if (typeof resp === 'number') return { count: resp };
-      if (resp && typeof resp === 'object' && typeof resp.total === 'number') return { count: resp.total };
-      return null;
+      // Prefer a locally maintained dataset under assets (each project may include a planted count)
+      const projects: any = await this.http.get('assets/data/reforestation-projects.json').toPromise().catch(() => null);
+      if (projects && Array.isArray(projects)) {
+        const total = projects.reduce((sum: number, p: any) => sum + (Number(p.planted || p.trees || 0)), 0);
+        return { count: total, source: 'assets:data/reforestation-projects.json' };
+      }
+      // Fallback to a locally cached value if previously stored
+      try {
+        const raw = localStorage.getItem('metrics:trees-planted');
+        if (raw) {
+          const n = Number(JSON.parse(raw));
+          if (!isNaN(n)) return { count: n, source: 'localStorage' };
+        }
+      } catch {}
+      return { count: 0, source: 'fallback' };
     } catch (e) {
-      return null;
+      return { count: 0, source: 'error' };
     }
   }
 
