@@ -45,6 +45,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private wildlifePollTimer: any = null;
   // Chart.js instance
   private plantingsChart: any = null;
+  // Cached series for printing
+  plantingsSeries: Array<{ month: string; count: number }> = [];
 
   constructor(
     private supabase: SupabaseService,
@@ -64,8 +66,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   // Fetch timeseries from server and render Chart.js bar chart into canvas
   private async loadPlantingsTimeseriesAndRender() {
     try {
-      const resp: any = await this.http.get('/api/metrics/plantings-timeseries').toPromise().catch(() => null);
-      const series = (resp && resp.series) || [];
+      // Load from client asset; shape: [{ month: 'YYYY-MM', count: number }]
+      const series: Array<{ month: string; count: number }> = await this.http.get('assets/data/plantings-timeseries.json').toPromise().catch(() => []) as any;
+      this.plantingsSeries = Array.isArray(series) ? series : [];
       // Ensure we render a full 12-month series (last 12 months) even if server returns sparse data.
       const now = new Date();
       const months: Date[] = [];
@@ -76,7 +79,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       // Build a lookup from server series keyed by YYYY-MM to counts
       const lookup: Record<string, number> = {};
-      for (const s of series) {
+      for (const s of (this.plantingsSeries || [])) {
         const month = String(s.month || '');
         const key = month.length === 7 ? month : (month.slice(0,7) || '');
         if (key) lookup[key] = Number(s.count || 0);
@@ -165,6 +168,43 @@ export class DashboardComponent implements OnInit, OnDestroy {
     } catch (e) {
       // ignore
     }
+  }
+
+  printAnalytics() {
+    try {
+      const series = this.plantingsSeries && this.plantingsSeries.length ? this.plantingsSeries : [];
+      const canvas: HTMLCanvasElement | null = document.querySelector('#plantingsChartCanvas');
+      const chartImg = canvas ? (canvas.toDataURL('image/png')) : '';
+      const win = window.open('', '_blank');
+      if (!win) return;
+      const rows = series.map(s => `<tr><td style="padding:6px 10px;border:1px solid #cfcfcf">${s.month}</td><td style="padding:6px 10px;border:1px solid #cfcfcf;text-align:right">${Number(s.count||0).toLocaleString()}</td></tr>`).join('');
+      const html = `<!doctype html><html><head><meta charset=\"utf-8\"><title>TerraCare — Plantings Analytics</title>
+      <style>
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; margin:24px;}
+      header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+      .brand{font-weight:600;color:#2e7d32}
+      h1{margin:0 0 12px 0;}
+      .meta{color:#666;margin-bottom:18px;font-size:12px}
+      table{border-collapse:collapse;width:100%;}
+      thead th{background:#f5f5f5;border:1px solid #cfcfcf;padding:8px 10px;text-align:left}
+      .chart-img{margin:12px 0 18px 0; max-width:100%; border:1px solid #e0e0e0; border-radius:6px}
+      @media print { .chart-img { page-break-inside: avoid; } }
+      </style></head><body>
+      <header>
+        <div class=\"brand\">TerraCare</div>
+        <h1 style=\"margin:0\">Plantings Analytics</h1>
+      </header>
+      <div class="meta">Generated: ${new Date().toLocaleString()}</div>
+      ${chartImg ? `<img class=\"chart-img\" src=\"${chartImg}\" alt=\"Plantings Chart\"/>` : ''}
+      <table>
+        <thead><tr><th>Month</th><th>Count</th></tr></thead>
+        <tbody>${rows || '<tr><td colspan="2" style="padding:10px;border:1px solid #cfcfcf;color:#666">No data</td></tr>'}</tbody>
+      </table>
+      <script>setTimeout(()=>window.print(), 150);</script>
+      </body></html>`;
+      win.document.write(html);
+      win.document.close();
+    } catch {}
   }
 
 
