@@ -178,29 +178,72 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const win = window.open('', '_blank');
       if (!win) return;
       const rows = series.map(s => `<tr><td style="padding:6px 10px;border:1px solid #cfcfcf">${s.month}</td><td style="padding:6px 10px;border:1px solid #cfcfcf;text-align:right">${Number(s.count||0).toLocaleString()}</td></tr>`).join('');
+      // Compute Plantings Over Time summary stats
+      const counts = series.map(s => Number(s.count||0));
+      const total = counts.reduce((sum,c)=>sum+c,0);
+      const avg = counts.length ? total / counts.length : 0;
+      const minVal = counts.length ? Math.min(...counts) : 0;
+      const maxVal = counts.length ? Math.max(...counts) : 0;
+      const minIdx = counts.length ? counts.indexOf(minVal) : -1;
+      const maxIdx = counts.length ? counts.indexOf(maxVal) : -1;
+      const minMonth = (minIdx>=0 && series[minIdx]) ? series[minIdx].month : '—';
+      const maxMonth = (maxIdx>=0 && series[maxIdx]) ? series[maxIdx].month : '—';
+      const lastMonth = series.length ? series[series.length-1].month : '—';
+      const lastCount = series.length ? Number(series[series.length-1].count||0) : 0;
+      const generatedAt = new Date();
+      const dateStr = generatedAt.toLocaleDateString();
+      const timeStr = generatedAt.toLocaleTimeString();
+      // Focus summary on Plantings Over Time only
       const html = `<!doctype html><html><head><meta charset=\"utf-8\"><title>TerraCare — Plantings Analytics</title>
       <style>
-      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; margin:24px;}
-      header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-      .brand{font-weight:600;color:#2e7d32}
-      h1{margin:0 0 12px 0;}
-      .meta{color:#666;margin-bottom:18px;font-size:12px}
+      :root{--brand:#2e7d32;--muted:#4b4b4b;--border:#cfcfcf;--bg:#ffffff}
+      @page { margin: 15mm 12mm; }
+      body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; margin:0;background:var(--bg);}
+      .page{padding:18px 22px 72px 22px;}
+      header.print-header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--brand);padding-bottom:10px;margin-bottom:14px}
+      .header-left{display:flex;align-items:center;gap:12px}
+      .brand{font-weight:800;color:var(--brand);font-size:19px}
+      h1{margin:0;font-size:21px}
+      .meta{color:var(--muted);margin-top:4px;font-size:12px}
+      .summary{display:grid;grid-template-columns: repeat(3, 1fr); gap:12px; margin:16px 0 18px 0}
+      .summary .card{border:1px solid var(--border); border-radius:8px; padding:10px; box-shadow:0 1px 0 rgba(0,0,0,0.04)}
+      .summary .label{color:var(--muted);font-size:12px}
+      .summary .value{font-weight:600;font-size:16px}
       table{border-collapse:collapse;width:100%;}
-      thead th{background:#f5f5f5;border:1px solid #cfcfcf;padding:8px 10px;text-align:left}
+      thead th{background:#f5f5f5;border:1px solid var(--border);padding:8px 10px;text-align:left}
+      tbody td{border:1px solid var(--border); padding:6px 10px}
       .chart-img{margin:12px 0 18px 0; max-width:100%; border:1px solid #e0e0e0; border-radius:6px}
-      @media print { .chart-img { page-break-inside: avoid; } }
+      footer.print-footer{position:fixed;bottom:0;left:0;right:0;border-top:1px solid var(--border);padding:8px 24px;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;background:#fff}
+      .page-num::after{content: counter(page) " / " counter(pages);}
+      @media print { .chart-img { page-break-inside: avoid; } thead{display:table-header-group;} }
       </style></head><body>
-      <header>
-        <div class=\"brand\">TerraCare</div>
-        <h1 style=\"margin:0\">Plantings Analytics</h1>
-      </header>
-      <div class="meta">Generated: ${new Date().toLocaleString()}</div>
-      ${chartImg ? `<img class=\"chart-img\" src=\"${chartImg}\" alt=\"Plantings Chart\"/>` : ''}
-      <table>
-        <thead><tr><th>Month</th><th>Count</th></tr></thead>
-        <tbody>${rows || '<tr><td colspan="2" style="padding:10px;border:1px solid #cfcfcf;color:#666">No data</td></tr>'}</tbody>
-      </table>
-      <script>setTimeout(()=>window.print(), 150);</script>
+      <div class="page">
+        <header class="print-header">
+          <div class="header-left">
+            <div class=\"brand\">TerraCare</div>
+            <h1>Plantings Analytics</h1>
+          </div>
+          <div class="meta">Generated on ${dateStr} at ${timeStr}</div>
+        </header>
+        <section class="summary">
+          <div class="card"><div class="label">Total Plantings</div><div class="value">${Number(total).toLocaleString()}</div></div>
+          <div class="card"><div class="label">Average / Month</div><div class="value">${avg.toFixed(1)}</div></div>
+          <div class="card"><div class="label">Peak Month</div><div class="value">${maxMonth} — ${Number(maxVal).toLocaleString()}</div></div>
+          <div class="card"><div class="label">Lowest Month</div><div class="value">${minMonth} — ${Number(minVal).toLocaleString()}</div></div>
+          <div class="card"><div class="label">Last Month</div><div class="value">${lastMonth} — ${Number(lastCount).toLocaleString()}</div></div>
+          <div class="card"><div class="label">Months Covered</div><div class="value">${series.length}</div></div>
+        </section>
+        ${chartImg ? `<img class=\"chart-img\" src=\"${chartImg}\" alt=\"Plantings Chart\"/>` : ''}
+        <table>
+          <thead><tr><th>Month</th><th>Count</th></tr></thead>
+          <tbody>${rows || '<tr><td colspan="2" style="padding:10px;border:1px solid var(--border);color:#666">No data</td></tr>'}</tbody>
+        </table>
+      </div>
+      <footer class="print-footer">
+        <div>TerraCare — Sustainability Analytics</div>
+        <div>Printed: ${dateStr} ${timeStr} · <span class="page-num"></span></div>
+      </footer>
+      <script>setTimeout(()=>window.print(), 200);</script>
       </body></html>`;
       win.document.write(html);
       win.document.close();
