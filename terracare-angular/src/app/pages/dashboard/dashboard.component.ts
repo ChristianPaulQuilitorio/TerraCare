@@ -170,11 +170,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  printAnalytics() {
+  async printAnalytics() {
     try {
       const series = this.plantingsSeries && this.plantingsSeries.length ? this.plantingsSeries : [];
-      const canvas: HTMLCanvasElement | null = document.querySelector('#plantingsChartCanvas');
-      const chartImg = canvas ? (canvas.toDataURL('image/png')) : '';
       const win = window.open('', '_blank');
       if (!win) return;
       const rows = series.map(s => `<tr><td style="padding:6px 10px;border:1px solid #cfcfcf">${s.month}</td><td style="padding:6px 10px;border:1px solid #cfcfcf;text-align:right">${Number(s.count||0).toLocaleString()}</td></tr>`).join('');
@@ -193,6 +191,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
       const generatedAt = new Date();
       const dateStr = generatedAt.toLocaleDateString();
       const timeStr = generatedAt.toLocaleTimeString();
+      // Resolve current user for attribution in printable
+      let generatedBy = 'Unknown User';
+      try {
+        const userResp = await this.supabase.client.auth.getUser();
+        const user = userResp?.data?.user;
+        if (user) {
+          const meta: any = user.user_metadata || {};
+          const fullName = meta['full_name'];
+          const name = meta['name'];
+          generatedBy = (fullName || name || user.email || user.id || generatedBy);
+        }
+      } catch {}
       // Focus summary on Plantings Over Time only
       const html = `<!doctype html><html><head><meta charset=\"utf-8\"><title>TerraCare — Plantings Analytics</title>
       <style>
@@ -223,7 +233,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
             <div class=\"brand\">TerraCare</div>
             <h1>Plantings Analytics</h1>
           </div>
-          <div class="meta">Generated on ${dateStr} at ${timeStr}</div>
+            <div class="meta">Generated on ${dateStr} at ${timeStr} by ${generatedBy}</div>
         </header>
         <section class="summary">
           <div class="card"><div class="label">Total Plantings</div><div class="value">${Number(total).toLocaleString()}</div></div>
@@ -233,7 +243,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
           <div class="card"><div class="label">Last Month</div><div class="value">${lastMonth} — ${Number(lastCount).toLocaleString()}</div></div>
           <div class="card"><div class="label">Months Covered</div><div class="value">${series.length}</div></div>
         </section>
-        ${chartImg ? `<img class=\"chart-img\" src=\"${chartImg}\" alt=\"Plantings Chart\"/>` : ''}
         <table>
           <thead><tr><th>Month</th><th>Count</th></tr></thead>
           <tbody>${rows || '<tr><td colspan="2" style="padding:10px;border:1px solid var(--border);color:#666">No data</td></tr>'}</tbody>
